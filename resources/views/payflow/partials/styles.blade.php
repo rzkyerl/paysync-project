@@ -136,6 +136,97 @@
     .section-head h2 { margin: 0 0 10px; font-size: 32px; color: var(--navy); letter-spacing: 0; }
     .feature-card { padding: 18px; }
     .icon-box { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; background: var(--brand-soft); color: var(--brand); font-weight: 900; }
+    .problem-list {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        border-top: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+    }
+    .problem-item {
+        display: grid;
+        grid-template-columns: 42px 1fr;
+        gap: 14px;
+        padding: 22px 24px;
+        border-bottom: 1px solid var(--line);
+    }
+    .problem-item:nth-child(odd) { border-right: 1px solid var(--line); }
+    .problem-item:nth-last-child(-n+2) { border-bottom: 0; }
+    .problem-item h3,
+    .feature-row h3,
+    .workflow-item h3,
+    .role-item h3 { margin: 0 0 6px; color: var(--navy); }
+    .problem-item p,
+    .feature-row p,
+    .workflow-item p,
+    .role-item p { margin: 0; }
+    .feature-list {
+        display: grid;
+        border-top: 1px solid var(--line);
+    }
+    .feature-row {
+        display: grid;
+        grid-template-columns: 64px minmax(180px, .55fr) 1fr;
+        gap: 18px;
+        align-items: center;
+        padding: 20px 0;
+        border-bottom: 1px solid var(--line);
+    }
+    .feature-index {
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+        display: grid;
+        place-items: center;
+        color: var(--brand);
+        background: rgba(15, 52, 115, .08);
+        border: 1px solid rgba(15, 52, 115, .12);
+    }
+    .workflow-list {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 0;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        overflow: hidden;
+        background: #fff;
+    }
+    .workflow-item {
+        padding: 20px 18px;
+        border-right: 1px solid var(--line);
+    }
+    .workflow-item:last-child { border-right: 0; }
+    .workflow-item .dot { margin-bottom: 16px; }
+    .role-strip {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0;
+        border-top: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+    }
+    .role-item {
+        display: grid;
+        grid-template-columns: 42px 1fr;
+        gap: 14px;
+        padding: 24px;
+        border-right: 1px solid var(--line);
+    }
+    .role-item:last-child { border-right: 0; }
+    .security-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .security-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        min-height: 42px;
+        border-radius: 999px;
+        padding: 8px 14px 8px 8px;
+        background: rgba(248, 250, 252, .78);
+        border: 1px solid rgba(100, 116, 139, .14);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.8);
+    }
     .mobile-only { display: none; }
 
     @keyframes chart-rise {
@@ -157,7 +248,6 @@
     }
     .hero .card,
     .hero .mockup,
-    .landing-section .card,
     .content > .grid .card,
     .content > .card {
         animation: surface-in .55s cubic-bezier(.2, .8, .2, 1) both;
@@ -175,17 +265,63 @@
     .timeline-row:nth-child(4) { animation-delay: .15s; }
     .timeline-row:nth-child(5) { animation-delay: .20s; }
     .timeline-row:nth-child(6) { animation-delay: .25s; }
+    .reveal {
+        opacity: 0;
+        transform: translateY(18px);
+        transition: opacity .7s cubic-bezier(.2, .8, .2, 1), transform .7s cubic-bezier(.2, .8, .2, 1);
+    }
+    .reveal.is-visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    .problem-item.reveal:nth-child(2),
+    .feature-row.reveal:nth-child(2),
+    .workflow-item.reveal:nth-child(2),
+    .role-item.reveal:nth-child(2),
+    .security-item.reveal:nth-child(2) { transition-delay: .05s; }
+    .problem-item.reveal:nth-child(3),
+    .feature-row.reveal:nth-child(3),
+    .workflow-item.reveal:nth-child(3),
+    .role-item.reveal:nth-child(3),
+    .security-item.reveal:nth-child(3) { transition-delay: .10s; }
+    .problem-item.reveal:nth-child(4),
+    .feature-row.reveal:nth-child(4),
+    .workflow-item.reveal:nth-child(4),
+    .security-item.reveal:nth-child(4) { transition-delay: .15s; }
+    .feature-row.reveal:nth-child(5),
+    .workflow-item.reveal:nth-child(5),
+    .security-item.reveal:nth-child(5) { transition-delay: .20s; }
+    .feature-row.reveal:nth-child(6),
+    .workflow-item.reveal:nth-child(6),
+    .security-item.reveal:nth-child(6) { transition-delay: .25s; }
 
     @media (prefers-reduced-motion: reduce) {
         *, *::before, *::after {
             animation-duration: .001ms !important;
             animation-iteration-count: 1 !important;
+            transition-duration: .001ms !important;
             scroll-behavior: auto !important;
         }
     }
 
     @media (max-width: 900px) {
         .grid-2, .grid-3, .grid-4, .hero-grid, .app-shell, .auth-page { grid-template-columns: 1fr; }
+        .problem-list,
+        .feature-row,
+        .workflow-list,
+        .role-strip { grid-template-columns: 1fr; }
+        .problem-item,
+        .problem-item:nth-child(odd),
+        .workflow-item,
+        .role-item {
+            border-right: 0;
+            border-bottom: 1px solid var(--line);
+        }
+        .problem-item:nth-last-child(-n+2) { border-bottom: 1px solid var(--line); }
+        .problem-item:last-child,
+        .workflow-item:last-child,
+        .role-item:last-child { border-bottom: 0; }
+        .feature-row { align-items: start; gap: 10px; }
         .sidebar { position: static; height: auto; }
         .landing-links { display: none; }
         .mobile-only { display: inline-flex; }

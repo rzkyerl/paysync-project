@@ -71,32 +71,35 @@
             </div>
         </section>
 
-        <section id="produk" class="landing-section">
+        <section id="produk" class="landing-section reveal">
             <div class="container">
                 <div class="section-head">
                     <h2>Proses HR manual membuat data tersebar</h2>
                     <p class="muted">Payroll rentan salah, approval terlambat, dan status pembayaran sulit ditelusuri ketika employee data, attendance, dan finance review berada di tempat berbeda.</p>
                 </div>
-                <div class="grid grid-4">
+                <div class="problem-list">
                     @foreach ([
                         ['Data tersebar','Informasi karyawan sulit disinkronkan antar tim.','users'],
                         ['Payroll rawan keliru','Komponen gaji dan potongan tidak konsisten.','warning'],
                         ['Approval lambat','Finance tidak punya konteks anomali yang cukup.','clock'],
                         ['Transfer sulit dilacak','Status batch dan rekonsiliasi tidak transparan.','link'],
                     ] as $item)
-                        <div class="card feature-card"><div class="icon-box">@include('payflow.partials.icon', ['name' => $item[2], 'class' => 'icon icon-lg'])</div><h3>{{ $item[0] }}</h3><p class="muted">{{ $item[1] }}</p></div>
+                        <div class="problem-item reveal">
+                            <div class="icon-box">@include('payflow.partials.icon', ['name' => $item[2], 'class' => 'icon icon-lg'])</div>
+                            <div><h3>{{ $item[0] }}</h3><p class="muted">{{ $item[1] }}</p></div>
+                        </div>
                     @endforeach
                 </div>
             </div>
         </section>
 
-        <section id="fitur" class="landing-section alt">
+        <section id="fitur" class="landing-section alt reveal">
             <div class="container">
                 <div class="section-head">
                     <h2>Fitur utama PaySync</h2>
                     <p class="muted">Dirancang untuk alur HR, Finance, dan Employee portal dalam demonstrasi akademik.</p>
                 </div>
-                <div class="grid grid-3">
+                <div class="feature-list">
                     @foreach ([
                         ['Employee Management','Kelola profil, organisasi, status kerja, dan kelengkapan data karyawan.','users'],
                         ['Attendance','Import CSV, validasi anomali, dan kunci periode sebelum payroll.','calendar'],
@@ -105,47 +108,55 @@
                         ['Digital Payslip','Slip gaji A4 dengan label Confidential dan Data Simulasi.','file'],
                         ['Salary Disbursement Simulation','Batch transfer dummy, retry gagal, dan rekonsiliasi tanpa integrasi bank nyata.','bank'],
                     ] as $item)
-                        <div class="card feature-card"><div class="icon-box">@include('payflow.partials.icon', ['name' => $item[2], 'class' => 'icon icon-lg'])</div><h3>{{ $item[0] }}</h3><p class="muted">{{ $item[1] }}</p></div>
+                        <div class="feature-row reveal">
+                            <div class="feature-index">@include('payflow.partials.icon', ['name' => $item[2], 'class' => 'icon icon-lg'])</div>
+                            <h3>{{ $item[0] }}</h3>
+                            <p class="muted">{{ $item[1] }}</p>
+                        </div>
                     @endforeach
                 </div>
             </div>
         </section>
 
-        <section id="cara-kerja" class="landing-section">
+        <section id="cara-kerja" class="landing-section reveal">
             <div class="container">
                 <div class="section-head"><h2>Cara kerja end-to-end</h2><p class="muted">Dari data karyawan sampai rekonsiliasi payroll dalam enam langkah.</p></div>
-                <div class="grid grid-3">
+                <div class="workflow-list">
                     @foreach (['Kelola data karyawan','Impor kehadiran','Hitung payroll','Review dan approval','Terbitkan slip','Simulasi transfer dan rekonsiliasi'] as $i => $step)
-                        <div class="card feature-card"><span class="dot">{{ $i + 1 }}</span><h3>{{ $step }}</h3><p class="muted">Setiap tahap memiliki status, validasi, dan audit trail yang jelas.</p></div>
+                        <div class="workflow-item reveal">
+                            <span class="dot">{{ $i + 1 }}</span>
+                            <h3>{{ $step }}</h3>
+                            <p class="muted">Setiap tahap memiliki status, validasi, dan audit trail yang jelas.</p>
+                        </div>
                     @endforeach
                 </div>
             </div>
         </section>
 
-        <section class="landing-section alt">
-            <div class="container grid grid-3">
+        <section class="landing-section alt reveal">
+            <div class="container role-strip">
                 @foreach ([
                     ['HR','Memantau data karyawan, attendance, payroll run, dan anomali.','dashboard'],
                     ['Finance','Meninjau approval, total nominal, batch transfer, dan rekonsiliasi.','bank'],
                     ['Employee','Melihat slip gaji, riwayat kehadiran, dan data profil sendiri.','users'],
                 ] as $role)
-                    <div class="card feature-card"><div class="icon-box">@include('payflow.partials.icon', ['name' => $role[2], 'class' => 'icon icon-lg'])</div><h3>Workspace {{ $role[0] }}</h3><p class="muted">{{ $role[1] }}</p></div>
+                    <div class="role-item reveal"><div class="icon-box">@include('payflow.partials.icon', ['name' => $role[2], 'class' => 'icon icon-lg'])</div><div><h3>Workspace {{ $role[0] }}</h3><p class="muted">{{ $role[1] }}</p></div></div>
                 @endforeach
             </div>
         </section>
 
-        <section id="keamanan" class="landing-section">
+        <section id="keamanan" class="landing-section reveal">
             <div class="container">
                 <div class="section-head"><h2>Kontrol aplikasi yang realistis</h2><p class="muted">Desain hanya menyebut kontrol yang umum di aplikasi Laravel demo: role-based access, password hashing, CSRF protection, database transaction, audit log, dan data simulation.</p></div>
-                <div class="grid grid-3">
+                <div class="security-list">
                     @foreach (['Role-based access','Password hashing','CSRF protection','Database transaction','Audit log','Data simulation'] as $item)
-                        <div class="card feature-card"><strong>{{ $item }}</strong><p class="muted">Dinyatakan sebagai kemampuan aplikasi, bukan klaim integrasi bank atau kepatuhan eksternal.</p></div>
+                        <div class="security-item reveal"><span class="dot done">@include('payflow.partials.icon', ['name' => 'check', 'class' => 'icon icon-sm'])</span><strong>{{ $item }}</strong></div>
                     @endforeach
                 </div>
             </div>
         </section>
 
-        <section id="faq" class="landing-section alt">
+        <section id="faq" class="landing-section alt reveal">
             <div class="container grid grid-2">
                 <div>
                     <h2>Daftarkan Perusahaan Anda</h2>
@@ -168,5 +179,25 @@
             <span>Academic Demonstration Project</span>
         </div>
     </footer>
+    <script>
+        (() => {
+            const items = document.querySelectorAll('.reveal');
+            if (!items.length || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                items.forEach((item) => item.classList.add('is-visible'));
+                return;
+            }
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.16, rootMargin: '0px 0px -8% 0px' });
+
+            items.forEach((item) => observer.observe(item));
+        })();
+    </script>
 </body>
 </html>
