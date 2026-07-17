@@ -10,6 +10,6 @@
     <div class="section-body" style="display:flex; justify-content:space-between;"><span class="muted">Menampilkan 1-5 dari 248 data</span><div><button class="btn btn-secondary">Sebelumnya</button><button class="btn btn-secondary">Berikutnya</button></div></div>
 </section>
 <div class="grid grid-2" style="margin-top:16px;">
-    <div class="card feature-card"><h3>Empty State</h3><p class="muted">Jika belum ada data, tampilkan CTA Tambah Karyawan atau Gunakan Data Demo.</p><button class="btn btn-primary">Gunakan Data Demo</button></div>
+    <div class="card feature-card"><h3>Empty State</h3><p class="muted">Jika belum ada data, tampilkan CTA Tambah Karyawan atau Import Data.</p><button class="btn btn-primary">Import Data</button></div>
     <div class="card feature-card"><h3>No Result State</h3><p class="muted">Data karyawan tidak ditemukan.</p><button class="btn btn-secondary">Reset Filter</button></div>
 </div>

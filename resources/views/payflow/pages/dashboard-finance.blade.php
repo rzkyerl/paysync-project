@@ -9,7 +9,7 @@
         @include('payflow.pages.parts.approval-table')
     </section>
     <section class="card">
-        <div class="section-title"><h2>Transfer Batch Status</h2><span class="badge badge-blue">Data Simulasi</span></div>
+        <div class="section-title"><h2>Transfer Batch Status</h2><span class="badge badge-blue">Payroll Operations</span></div>
         <div class="section-body grid">
             @foreach ([['Success',78,'badge-green'],['Processing',14,'badge-blue'],['Failed',8,'badge-red']] as $row)
                 <div><div style="display:flex; justify-content:space-between;"><strong>{{ $row[0] }}</strong><span>{{ $row[1] }}%</span></div><div class="progress"><span style="width:{{ $row[1] }}%;"></span></div></div>

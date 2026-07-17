@@ -1,17 +1,17 @@
 @php
     $titles = [
         'dashboard-hr' => ['Dashboard HR', 'Ringkasan pekerjaan HR hari ini untuk periode payroll aktif.'],
-        'dashboard-finance' => ['Dashboard Finance', 'Approval payroll, status transfer, dan rekonsiliasi simulasi.'],
+        'dashboard-finance' => ['Dashboard Finance', 'Approval payroll, status transfer, dan rekonsiliasi pembayaran.'],
         'dashboard-employee' => ['Dashboard Employee', 'Portal personal untuk slip gaji dan kehadiran sendiri.'],
         'employees' => ['Daftar Karyawan', 'Kelola data karyawan, status kerja, dan kelengkapan rekening.'],
         'attendance' => ['Kehadiran', 'Import CSV, validasi anomali, dan kunci periode payroll.'],
         'payroll' => ['Proses Payroll', 'Workspace kalkulasi payroll, review anomali, dan finalisasi.'],
         'approval' => ['Approval Queue', 'Review payroll yang dikirim HR sebelum disetujui Finance.'],
-        'payslips' => ['Slip Gaji Digital', 'Publikasi dan preview slip gaji formal berlabel simulasi.'],
-        'disbursement' => ['Batch Transfer', 'Simulasi penyaluran gaji tanpa integrasi bank nyata.'],
-        'reconciliation' => ['Rekonsiliasi', 'Cocokkan payroll net pay dengan transfer success dummy.'],
+        'payslips' => ['Slip Gaji Digital', 'Publikasi dan preview slip gaji formal untuk karyawan.'],
+        'disbursement' => ['Batch Transfer', 'Kelola batch penyaluran gaji dan status pembayaran.'],
+        'reconciliation' => ['Rekonsiliasi', 'Cocokkan payroll net pay dengan nilai transfer berhasil.'],
         'reports' => ['Reports Hub', 'Laporan payroll, attendance, transfer, rekonsiliasi, dan audit.'],
-        'settings' => ['Pengaturan Perusahaan', 'Profil, payroll, simulasi pembayaran, notifikasi, dan data demo.'],
+        'settings' => ['Pengaturan Perusahaan', 'Profil, payroll, pembayaran, notifikasi, dan data operasional.'],
         'audit' => ['Audit Log', 'Riwayat perubahan read-only untuk modul penting.'],
     ];
     [$title, $description] = $titles[$page];
@@ -52,8 +52,8 @@
         <aside class="sidebar">
             @include('payflow.partials.brand')
             <div class="workspace">
-                <strong>PT Nusantara Demo</strong>
-                <div><span class="badge" style="margin-top:8px; background:rgba(255,255,255,.08); color:#d9e7ff; border-color:rgba(255,255,255,.12);">Demo Workspace</span></div>
+                <strong>PT Nusantara</strong>
+                <div><span class="badge" style="margin-top:8px; background:rgba(255,255,255,.08); color:#d9e7ff; border-color:rgba(255,255,255,.12);">Company Workspace</span></div>
             </div>
             @foreach ($nav as $group => $items)
                 <div class="nav-group">
@@ -67,9 +67,15 @@
                 </div>
             @endforeach
             <div class="workspace" style="margin-top:24px;">
-                <strong>Rina Maharani</strong>
-                <div class="muted" style="color:#94a3b8;">HR Manager</div>
-                <a class="nav-link" style="margin-top:8px;" href="/login">Keluar</a>
+                <strong style="display:block; font-size:13px; color:#e2e8f0;">{{ auth()->user()?->name ?? 'Pengguna' }}</strong>
+                <div class="muted" style="color:#64748b; font-size:12px; margin-top:2px;">{{ auth()->user()?->email }}</div>
+                <form method="POST" action="{{ route('logout') }}" style="margin-top:10px;">
+                    @csrf
+                    <button type="submit" class="nav-link" style="width:100%; background:none; border:none; cursor:pointer; color:#f87171; text-align:left;">
+                        @include('payflow.partials.icon', ['name' => 'logout', 'class' => 'icon icon-sm'])
+                        Keluar
+                    </button>
+                </form>
             </div>
         </aside>
 
@@ -90,7 +96,7 @@
                     <div><h1>{{ $title }}</h1><p>{{ $description }}</p></div>
                     <div style="display:flex; gap:10px; flex-wrap:wrap;">
                         <span class="badge badge-blue">Periode Juli 2026</span>
-                        @if (in_array($page, ['disbursement','reconciliation','payslips'], true))<span class="badge badge-blue">Data Simulasi</span>@endif
+                        @if (in_array($page, ['disbursement','reconciliation','payslips'], true))<span class="badge badge-blue">Payroll Operations</span>@endif
                         <a class="btn btn-primary" href="/app/payroll">Proses Payroll</a>
                     </div>
                 </div>

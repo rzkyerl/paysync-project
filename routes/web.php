@@ -1,13 +1,20 @@
 <?php
 
+use App\Http\Controllers\LoginController;
+use App\Http\Controllers\RegisterController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('payflow.landing');
 });
 
-Route::view('/login', 'payflow.auth.login')->name('login');
-Route::view('/register', 'payflow.auth.register')->name('register');
+Route::get('/login', [LoginController::class, 'show'])->name('login');
+Route::post('/login', [LoginController::class, 'store'])->name('login.attempt');
+Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
+
+Route::get('/register', [RegisterController::class, 'show'])->name('register');
+Route::post('/register', [RegisterController::class, 'store'])->name('register.store');
+
 Route::view('/verify', 'payflow.auth.verify')->name('verify');
 Route::view('/onboarding', 'payflow.onboarding')->name('onboarding');
 

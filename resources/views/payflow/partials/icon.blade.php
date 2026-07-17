@@ -23,6 +23,7 @@
         'file' => '<path d="M7 3h7l4 4v14H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v5h5"/>',
         'link' => '<path d="M10 13a5 5 0 0 0 7.1 0l1.4-1.4a5 5 0 0 0-7.1-7.1l-.8.8"/><path d="M14 11a5 5 0 0 0-7.1 0l-1.4 1.4a5 5 0 0 0 7.1 7.1l.8-.8"/>',
         'lock' => '<path d="M7 10V8a5 5 0 0 1 10 0v2"/><path d="M6 10h12v10H6V10Z"/><path d="M12 14v2"/>',
+        'logout' => '<path d="M9 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>',
     ];
 @endphp
 <svg class="{{ $class }}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
