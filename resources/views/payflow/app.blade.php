@@ -117,29 +117,88 @@
             @endforeach
         </div>
     @endforeach
-            <div class="workspace" style="margin-top:24px;">
-                <strong style="display:block; font-size:13px; color:#e2e8f0;">{{ auth()->user()?->name ?? 'Pengguna' }}</strong>
-                <div class="muted" style="color:#64748b; font-size:12px; margin-top:2px;">{{ auth()->user()?->email }}</div>
-                <form method="POST" action="{{ route('logout') }}" style="margin-top:10px;">
-                    @csrf
-                    <button type="submit" class="nav-link" style="width:100%; background:none; border:none; cursor:pointer; color:#f87171; text-align:left;">
-                        @include('payflow.partials.icon', ['name' => 'logout', 'class' => 'icon icon-sm'])
-                        <span class="nav-label">Keluar</span>
-                    </button>
-                </form>
+            <div class="sidebar-bottom">
+                <div class="sidebar-version">PaySync v1.0</div>
             </div>
         </aside>
 
         <main>
             <header class="topbar">
-                <div><strong>PaySync</strong> <span class="muted">/ {{ $title }}</span></div>
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <label style="position:relative;">
-                        <span style="position:absolute; left:10px; top:50%; transform:translateY(-50%); color:#94a3b8;">@include('payflow.partials.icon', ['name' => 'search', 'class' => 'icon icon-sm'])</span>
-                        <input class="input" style="width:220px; padding:8px 10px 8px 34px;" placeholder="Cari...">
+                <div class="topbar-left">
+                    <button class="topbar-menu-btn" @click="$store.sidebar.toggle()" title="Toggle sidebar" aria-label="Toggle sidebar">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+                        </svg>
+                    </button>
+                    <div class="topbar-breadcrumb">
+                        <span class="topbar-brand">PaySync</span>
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color:#cbd5e1;flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg>
+                        <span class="topbar-page">{{ $title }}</span>
+                    </div>
+                </div>
+                <div class="topbar-right" x-data>
+                    <label class="topbar-search">
+                        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#94a3b8;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        <input class="input topbar-search-input" placeholder="Cari modul, karyawan...">
                     </label>
-                    <span class="badge badge-amber">@include('payflow.partials.icon', ['name' => 'bell', 'class' => 'icon icon-sm']) 3 Notifikasi</span>
-                    <span class="badge">@include('payflow.partials.icon', ['name' => 'help', 'class' => 'icon icon-sm']) Help</span>
+
+                    {{-- Notification Bell --}}
+                    <div class="topbar-icon-btn" x-data="{ open: false }" @click.outside="open = false">
+                        <button @click="open = !open" class="topbar-icon-btn-inner" aria-label="Notifikasi" title="Notifikasi">
+                            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                            <span class="topbar-notif-dot"></span>
+                        </button>
+                        <div class="topbar-dropdown" x-show="open" x-cloak x-transition style="width:300px;">
+                            <div class="topbar-dropdown-head">Notifikasi</div>
+                            <div class="topbar-dropdown-item">
+                                <span class="topbar-dropdown-dot topbar-dropdown-dot--amber"></span>
+                                <div><strong>3 rekening belum terverifikasi</strong><div class="muted" style="font-size:12px;">Segera tinjau data karyawan</div></div>
+                            </div>
+                            <div class="topbar-dropdown-item">
+                                <span class="topbar-dropdown-dot topbar-dropdown-dot--blue"></span>
+                                <div><strong>Payroll menunggu approval</strong><div class="muted" style="font-size:12px;">Periode Juli 2026</div></div>
+                            </div>
+                            <div class="topbar-dropdown-item">
+                                <span class="topbar-dropdown-dot topbar-dropdown-dot--green"></span>
+                                <div><strong>Transfer batch berhasil</strong><div class="muted" style="font-size:12px;">48 karyawan — Juni 2026</div></div>
+                            </div>
+                            <a href="/app/audit" class="topbar-dropdown-footer">Lihat semua aktivitas →</a>
+                        </div>
+                    </div>
+
+                    {{-- User Profile --}}
+                    <div x-data="{ open: false }" @click.outside="open = false" class="topbar-user-wrap">
+                        <button @click="open = !open" class="topbar-user-btn" aria-label="Menu pengguna">
+                            <span class="topbar-avatar">{{ strtoupper(substr(auth()->user()?->name ?? 'U', 0, 2)) }}</span>
+                            <div class="topbar-user-info">
+                                <span class="topbar-user-name">{{ auth()->user()?->name ?? 'Pengguna' }}</span>
+                                <span class="topbar-user-role badge badge-blue" style="font-size:10px; padding:2px 7px;">{{ match(auth()->user()?->role) { 'hr_manager' => 'HR Manager', 'finance_manager' => 'Finance', 'employee' => 'Karyawan', 'super_admin' => 'Super Admin', default => ucfirst(auth()->user()?->role ?? '') } }}</span>
+                            </div>
+                            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color:#94a3b8;flex-shrink:0;"><polyline points="6 9 12 15 18 9"/></svg>
+                        </button>
+                        <div class="topbar-dropdown topbar-dropdown--right" x-show="open" x-cloak x-transition>
+                            <div class="topbar-dropdown-head" style="padding-bottom:12px;">
+                                <div style="font-weight:700; color:var(--navy);">{{ auth()->user()?->name }}</div>
+                                <div class="muted" style="font-size:12px; margin-top:2px;">{{ auth()->user()?->email }}</div>
+                            </div>
+                            <a href="/app/settings" class="topbar-dropdown-item topbar-dropdown-item--link">
+                                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                                Pengaturan
+                            </a>
+                            <a href="/app/audit" class="topbar-dropdown-item topbar-dropdown-item--link">
+                                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                                Audit Log
+                            </a>
+                            <div style="height:1px; background:var(--line); margin:8px 0;"></div>
+                            <form method="POST" action="{{ route('logout') }}">
+                                @csrf
+                                <button type="submit" class="topbar-dropdown-item topbar-dropdown-item--link topbar-dropdown-item--danger" style="width:100%; border:none; background:none; cursor:pointer; text-align:left;">
+                                    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                                    Keluar
+                                </button>
+                            </form>
+                        </div>
+                    </div>
                 </div>
             </header>
             <section class="content">
