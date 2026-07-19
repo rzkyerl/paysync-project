@@ -1,24 +1,56 @@
 <div class="table-wrap">
     <table>
-        <thead><tr><th><input type="checkbox"></th><th>NIP</th><th>Nama</th><th>Departemen</th><th>Jabatan</th><th>Status Kerja</th><th>Bergabung</th><th>Status Rekening</th><th>Aksi</th></tr></thead>
+        <thead>
+            <tr>
+                <th><input type="checkbox"></th>
+                @include('payflow.partials.sort-header', ['column' => 'nip', 'label' => 'NIP', 'currentSort' => $sortBy ?? 'name', 'currentDir' => $sortDir ?? 'asc'])
+                @include('payflow.partials.sort-header', ['column' => 'name', 'label' => 'Nama', 'currentSort' => $sortBy ?? 'name', 'currentDir' => $sortDir ?? 'asc'])
+                @include('payflow.partials.sort-header', ['column' => 'department', 'label' => 'Departemen', 'currentSort' => $sortBy ?? 'name', 'currentDir' => $sortDir ?? 'asc'])
+                <th>Jabatan</th>
+                @include('payflow.partials.sort-header', ['column' => 'work_status', 'label' => 'Status Kerja', 'currentSort' => $sortBy ?? 'name', 'currentDir' => $sortDir ?? 'asc'])
+                @include('payflow.partials.sort-header', ['column' => 'join_date', 'label' => 'Bergabung', 'currentSort' => $sortBy ?? 'name', 'currentDir' => $sortDir ?? 'asc'])
+                <th>Status Rekening</th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
         <tbody>
-            @foreach ([
-                ['EMP-1001','Rina Maharani','People','HR Manager','Active','12 Jan 2023','Verified'],
-                ['EMP-1008','Budi Santoso','Finance','Finance Lead','Active','03 Apr 2022','Verified'],
-                ['EMP-1024','Sari Wijaya','Operations','Payroll Specialist','Probation','08 Jul 2026','Unverified'],
-                ['EMP-1031','Andi Pratama','Engineering','Backend Developer','Contract','18 Mar 2024','Rejected'],
-                ['EMP-1044','Maya Putri','Sales','Account Executive','Active','25 Nov 2023','Verified'],
-            ] as $row)
+            @foreach ($employees as $row)
+            @php
+                $empId   = $row->id;
+                $empNip  = $row->nip;
+                $empName = $row->name;
+                $empDept = $row->department;
+                $empPos  = $row->position;
+                $empStat = $row->work_status;
+                $empJoin = $row->join_date;
+                $empBank = $row->bank_account_status;
+                $deleteUrl = route('employees.destroy', $empId);
+            @endphp
                 <tr>
                     <td><input type="checkbox"></td>
-                    <td>{{ $row[0] }}</td>
-                    <td><strong>{{ $row[1] }}</strong><div class="muted">avatar initials</div></td>
-                    <td>{{ $row[2] }}</td>
-                    <td>{{ $row[3] }}</td>
-                    <td><span class="badge {{ $row[4] === 'Active' ? 'badge-green' : 'badge-amber' }}">{{ $row[4] }}</span></td>
-                    <td>{{ $row[5] }}</td>
-                    <td><span class="badge {{ $row[6] === 'Verified' ? 'badge-green' : ($row[6] === 'Rejected' ? 'badge-red' : 'badge-amber') }}">{{ $row[6] }}</span></td>
-                    <td><button class="btn btn-secondary">Detail</button></td>
+                    <td>{{ $empNip }}</td>
+                    <td><strong>{{ $empName }}</strong><div class="muted">avatar initials</div></td>
+                    <td>{{ $empDept }}</td>
+                    <td>{{ $empPos }}</td>
+                    <td><span class="badge {{ $empStat === 'active' ? 'badge-green' : 'badge-amber' }}">{{ ucfirst($empStat) }}</span></td>
+                    <td>{{ $empJoin?->format('d M Y') ?? '-' }}</td>
+                    <td><span class="badge {{ $empBank === 'verified' ? 'badge-green' : ($empBank === 'rejected' ? 'badge-red' : 'badge-amber') }}">{{ ucfirst($empBank) }}</span></td>
+                    <td style="display:flex; gap:6px; align-items:center;">
+                        <a class="btn btn-secondary" href="{{ route('employees.show', $row) }}">Detail</a>
+                        @if (! ($isSuperAdminViewing ?? false))
+                            <button
+                                type="button"
+                                class="btn btn-danger"
+                                x-data
+                                @click="$store.confirm.show({
+                                    title: 'Hapus Karyawan',
+                                    message: 'Yakin ingin menghapus {{ addslashes($empName) }} ({{ $empNip }})? Aksi ini tidak dapat dibatalkan.',
+                                    actionUrl: '{{ $deleteUrl }}',
+                                    actionMethod: 'DELETE'
+                                })"
+                            >Hapus</button>
+                        @endif
+                    </td>
                 </tr>
             @endforeach
         </tbody>

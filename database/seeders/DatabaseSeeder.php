@@ -2,10 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -13,24 +11,13 @@ class DatabaseSeeder extends Seeder
 
     /**
      * Seed the application's database.
+     *
+     * All demo data (company, employees, users, payrolls + payroll items)
+     * is managed exclusively by DemoDataSeeder — single source of truth
+     * for multi-tenant correctness.
      */
     public function run(): void
     {
-        $users = [
-            ['name' => 'Rina HR',      'email' => 'rina.hr@paysync.test'],
-            ['name' => 'Budi Finance', 'email' => 'budi.finance@paysync.test'],
-            ['name' => 'Admin',        'email' => 'admin@paysync.test'],
-        ];
-
-        foreach ($users as $data) {
-            User::firstOrCreate(
-                ['email' => $data['email']],
-                [
-                    'name'              => $data['name'],
-                    'password'          => Hash::make('password'),
-                    'email_verified_at' => now(),
-                ]
-            );
-        }
+        $this->call(DemoDataSeeder::class);
     }
 }

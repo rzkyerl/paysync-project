@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\Employee;
+use App\Policies\EmployeePolicy;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -19,6 +22,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Register policies (Laravel 11 style — no AuthServiceProvider needed)
+        Gate::policy(Employee::class, EmployeePolicy::class);
     }
 }

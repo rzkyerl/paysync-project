@@ -13,7 +13,7 @@ class RegisterController extends Controller
     public function show()
     {
         if (Auth::check()) {
-            return redirect('/app/dashboard-hr');
+            return redirect('/app/'.Auth::user()->defaultDashboard());
         }
 
         return view('payflow.auth.register');
@@ -22,38 +22,46 @@ class RegisterController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'name'             => ['required', 'string', 'max:100'],
-            'email'            => ['required', 'email', 'max:150', 'unique:users,email'],
-            'phone'            => ['nullable', 'string', 'max:20'],
-            'position'         => ['nullable', 'string', 'max:100'],
-            'company'          => ['required', 'string', 'max:150'],
-            'company_size'     => ['required', 'string'],
-            'industry'         => ['nullable', 'string', 'max:100'],
-            'password'         => ['required', 'string', 'min:8', 'confirmed'],
-            'terms'            => ['accepted'],
+            'name' => ['required', 'string', 'max:100'],
+            'email' => ['required', 'email', 'max:150', 'unique:users,email'],
+            'phone' => ['nullable', 'string', 'max:20'],
+            'position' => ['nullable', 'string', 'max:100'],
+            'company' => ['required', 'string', 'max:150'],
+            'company_size' => ['required', 'string'],
+            'industry' => ['nullable', 'string', 'max:100'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'terms' => ['accepted'],
         ], [
-            'name.required'         => 'Nama lengkap wajib diisi.',
-            'email.required'        => 'Email kerja wajib diisi.',
-            'email.email'           => 'Format email tidak valid.',
-            'email.unique'          => 'Email ini sudah terdaftar. Silakan masuk.',
-            'company.required'      => 'Nama perusahaan wajib diisi.',
+            'name.required' => 'Nama lengkap wajib diisi.',
+            'email.required' => 'Email kerja wajib diisi.',
+            'email.email' => 'Format email tidak valid.',
+            'email.unique' => 'Email ini sudah terdaftar. Silakan masuk.',
+            'company.required' => 'Nama perusahaan wajib diisi.',
             'company_size.required' => 'Jumlah karyawan wajib dipilih.',
-            'password.required'     => 'Password wajib diisi.',
-            'password.min'          => 'Password minimal 8 karakter.',
-            'password.confirmed'    => 'Konfirmasi password tidak cocok.',
-            'terms.accepted'        => 'Anda harus menyetujui Ketentuan Penggunaan.',
+            'password.required' => 'Password wajib diisi.',
+            'password.min' => 'Password minimal 8 karakter.',
+            'password.confirmed' => 'Konfirmasi password tidak cocok.',
+            'terms.accepted' => 'Anda harus menyetujui Ketentuan Penggunaan.',
         ]);
 
         $user = User::create([
-            'name'     => $data['name'],
-            'email'    => $data['email'],
+            'name' => $data['name'],
+            'email' => $data['email'],
             'password' => Hash::make($data['password']),
+            'is_demo' => false,
+            'company_id' => null,
         ]);
 
         event(new Registered($user));
 
         Auth::login($user);
 
-        return redirect('/app/dashboard-hr');
+        session()->put('onboarding_prefill', [
+            'company_name' => $data['company'],
+            'company_size' => $data['company_size'],
+            'industry' => $data['industry'] ?? null,
+        ]);
+
+        return redirect()->route('onboarding');
     }
 }
