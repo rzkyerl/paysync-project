@@ -57,11 +57,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/app/payroll/{payroll}/attendance', [PayrollController::class, 'storeAttendance'])->middleware('role:hr_manager')->name('payroll.attendance.store');
     Route::post('/app/payroll/{payroll}/calculate', [PayrollController::class, 'calculate'])->middleware('role:hr_manager')->name('payroll.calculate');
     Route::post('/app/payroll/{payroll}/anomaly/{item}/acknowledge', [PayrollController::class, 'acknowledgeAnomaly'])->middleware('role:hr_manager')->name('payroll.anomaly.acknowledge');
-    Route::put('/payroll/{payroll}/recalculate', [PayrollController::class, 'store'])->name('payroll.recalculate');
-    Route::put('/payroll/{payroll}/submit', [PayrollController::class, 'submit'])->name('payroll.submit');
-    Route::post('/app/payroll/{payroll}/approve', [PayrollController::class, 'approve'])->middleware('role:finance_manager')->name('payroll.approve');
-    Route::post('/app/payroll/{payroll}/reject', [PayrollController::class, 'reject'])->middleware('role:finance_manager')->name('payroll.reject');
-    Route::post('/app/payroll/{payroll}/disburse', [PayrollController::class, 'disburse'])->middleware('role:finance_manager')->name('payroll.disburse');
+    Route::put('/app/payroll/{payroll}/recalculate', [PayrollController::class, 'store'])->middleware('role:hr_manager')->name('payroll.recalculate');
+    Route::put('/app/payroll/{payroll}/submit', [PayrollController::class, 'submit'])->middleware('role:hr_manager')->name('payroll.submit');
+    Route::post('/app/payroll/{payroll}/approve', [PayrollController::class, 'approve'])->middleware('role:finance_manager,super_admin')->name('payroll.approve');
+    Route::post('/app/payroll/{payroll}/reject', [PayrollController::class, 'reject'])->middleware('role:finance_manager,super_admin')->name('payroll.reject');
+    Route::post('/app/payroll/{payroll}/disburse', [PayrollController::class, 'disburse'])->middleware('role:finance_manager,super_admin')->name('payroll.disburse');
     Route::get('/app/payroll/{payroll}/reconcile', [PayrollController::class, 'reconcile'])->name('payroll.reconcile');
     Route::get('/app/payroll/{payroll}/payslip/{employee}', [PayrollController::class, 'payslip'])->name('payroll.payslip');
     Route::get('/app/my-payslips', [PayrollController::class, 'myPayslips'])->middleware('role:employee')->name('payroll.my-payslips');

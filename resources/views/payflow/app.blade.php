@@ -35,9 +35,9 @@
         ]));
     }
     if ($canSeeHr) {
-        $nav['People'] = [['employees', 'Karyawan'], ['employees', 'Organisasi'], ['employees', 'Rekening Bank']];
-        $nav['Time Management'] = [['attendance', 'Kehadiran'], ['attendance', 'Lembur'], ['attendance', 'Cuti']];
-        $nav['Payroll'] = [['payroll', 'Proses Payroll'], ['payroll', 'Komponen Gaji']];
+        $nav['People'] = [['employees', 'Karyawan']];
+        $nav['Time Management'] = [['attendance', 'Kehadiran']];
+        $nav['Payroll'] = [['payroll', 'Proses Payroll']];
     }
     if ($canSeeFinance) {
         $nav['Payroll'] = array_merge($nav['Payroll'] ?? [], [['approval', 'Persetujuan'], ['payslips', 'Slip Gaji']]);
@@ -81,13 +81,6 @@
 <body>
     <div class="app-shell">
         <aside class="sidebar" x-data :class="{ 'collapsed': $store.sidebar.collapsed }">
-            <button class="sidebar-toggle" @click="$store.sidebar.toggle()" title="Toggle sidebar">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="3" y1="6" x2="21" y2="6"/>
-                    <line x1="3" y1="12" x2="21" y2="12"/>
-                    <line x1="3" y1="18" x2="21" y2="18"/>
-                </svg>
-            </button>
             @include('payflow.partials.brand')
             <div class="workspace">
                 <strong>{{ $companyName }}</strong>
@@ -122,7 +115,7 @@
             </div>
         </aside>
 
-        <main>
+        <main x-data>
             <header class="topbar">
                 <div class="topbar-left">
                     <button class="topbar-menu-btn" @click="$store.sidebar.toggle()" title="Toggle sidebar" aria-label="Toggle sidebar">
@@ -145,10 +138,13 @@
                     {{-- Notification Bell --}}
                     <div class="topbar-icon-btn" x-data="{ open: false }" @click.outside="open = false">
                         <button @click="open = !open" class="topbar-icon-btn-inner" aria-label="Notifikasi" title="Notifikasi">
-                            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                            </svg>
                             <span class="topbar-notif-dot"></span>
                         </button>
-                        <div class="topbar-dropdown" x-show="open" x-cloak x-transition style="width:300px;">
+                        <div class="topbar-dropdown topbar-dropdown--right" x-show="open" x-cloak x-transition style="width:300px;">
                             <div class="topbar-dropdown-head">Notifikasi</div>
                             <div class="topbar-dropdown-item">
                                 <span class="topbar-dropdown-dot topbar-dropdown-dot--amber"></span>
@@ -170,11 +166,8 @@
                     <div x-data="{ open: false }" @click.outside="open = false" class="topbar-user-wrap">
                         <button @click="open = !open" class="topbar-user-btn" aria-label="Menu pengguna">
                             <span class="topbar-avatar">{{ strtoupper(substr(auth()->user()?->name ?? 'U', 0, 2)) }}</span>
-                            <div class="topbar-user-info">
-                                <span class="topbar-user-name">{{ auth()->user()?->name ?? 'Pengguna' }}</span>
-                                <span class="topbar-user-role badge badge-blue" style="font-size:10px; padding:2px 7px;">{{ match(auth()->user()?->role) { 'hr_manager' => 'HR Manager', 'finance_manager' => 'Finance', 'employee' => 'Karyawan', 'super_admin' => 'Super Admin', default => ucfirst(auth()->user()?->role ?? '') } }}</span>
-                            </div>
-                            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color:#94a3b8;flex-shrink:0;"><polyline points="6 9 12 15 18 9"/></svg>
+                            <span class="topbar-user-name">{{ auth()->user()?->name ?? 'Pengguna' }}</span>
+                            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="color:#94a3b8;flex-shrink:0;" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
                         </button>
                         <div class="topbar-dropdown topbar-dropdown--right" x-show="open" x-cloak x-transition>
                             <div class="topbar-dropdown-head" style="padding-bottom:12px;">
@@ -182,18 +175,18 @@
                                 <div class="muted" style="font-size:12px; margin-top:2px;">{{ auth()->user()?->email }}</div>
                             </div>
                             <a href="/app/settings" class="topbar-dropdown-item topbar-dropdown-item--link">
-                                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
                                 Pengaturan
                             </a>
                             <a href="/app/audit" class="topbar-dropdown-item topbar-dropdown-item--link">
-                                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                                 Audit Log
                             </a>
                             <div style="height:1px; background:var(--line); margin:8px 0;"></div>
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
                                 <button type="submit" class="topbar-dropdown-item topbar-dropdown-item--link topbar-dropdown-item--danger" style="width:100%; border:none; background:none; cursor:pointer; text-align:left;">
-                                    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                                     Keluar
                                 </button>
                             </form>
@@ -209,8 +202,10 @@
                         @if (in_array($page, ['disbursement','reconciliation','payslips'], true))<span class="badge badge-blue">Payroll Operations</span>@endif
                         @if ($isSuperAdminViewing)
                             <span class="badge badge-amber" title="Hanya tersedia untuk Tim HR/Finance">Mode Pantau</span>
-                        @else
+                        @elseif ($role === 'hr_manager')
                             <a class="btn btn-primary" href="/app/payroll">Proses Payroll</a>
+                        @elseif ($role === 'finance_manager')
+                            <a class="btn btn-primary" href="/app/approval">Approval Queue</a>
                         @endif
                     </div>
                 </div>
@@ -308,6 +303,14 @@
         });
     </script>
     <script defer src="{{ asset('vendor/alpinejs/cdn.min.js') }}"></script>
+    {{-- Chart.js CDN (loaded once, used by dashboard pages) --}}
+    <script>
+        if (typeof Chart === 'undefined') {
+            var _chartScript = document.createElement('script');
+            _chartScript.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
+            document.head.appendChild(_chartScript);
+        }
+    </script>
 
     {{-- 9.5 — Flash session integration: trigger toast from Laravel flash --}}
     @if(session('toast'))
@@ -320,7 +323,7 @@
     </script>
     @endif
 
-    {{-- 11.2 — Confirm dialog modal (11.4 keyboard shortcuts, 11.7 method-spoofing) --}}
+    {{-- 11.2 — Confirm dialog modal --}}
     <div
         x-data
         x-cloak
@@ -337,14 +340,20 @@
         x-transition:leave="modal-fade-leave"
     >
         <div class="modal-dialog">
+            {{-- Icon --}}
+            <div class="modal-icon modal-icon--danger">
+                <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                    <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+            </div>
             <h2 class="modal-title" x-text="$store.confirm.title"></h2>
             <p class="modal-message" x-text="$store.confirm.message"></p>
-            {{-- 11.7: POST form with _method spoofing --}}
             <form x-ref="confirmForm" method="POST" :action="$store.confirm.actionUrl">
                 @csrf
                 <input type="hidden" name="_method" :value="$store.confirm.actionMethod">
                 <div class="modal-actions">
-                    <button x-ref="cancelButton" type="button" class="btn btn-secondary" @click="$store.confirm.close()" autofocus>Batal</button>
+                    <button x-ref="cancelButton" type="button" class="btn btn-secondary" @click="$store.confirm.close()">Batal</button>
                     <button type="submit" class="btn btn-danger">Konfirmasi</button>
                 </div>
             </form>

@@ -116,7 +116,7 @@ class PayrollController extends Controller
     public function calculate(Request $request, Payroll $payroll, PayrollService $service): RedirectResponse
     {
         $this->authorizePayroll($request, $payroll, ['hr_manager']);
-        abort_if($payroll->status !== 'draft', 422);
+        abort_if(! in_array($payroll->status, ['draft', 'needs_review'], true), 422);
         $service->calculate($payroll);
 
         return redirect()->route('payroll.show', $payroll)->with('status', 'Payroll berhasil dihitung dan masuk Needs Review.');
@@ -145,7 +145,7 @@ class PayrollController extends Controller
 
     public function approve(Request $request, Payroll $payroll): RedirectResponse
     {
-        $this->authorizePayroll($request, $payroll, ['finance_manager']);
+        $this->authorizePayroll($request, $payroll, ['finance_manager', 'super_admin']);
         abort_if($payroll->status !== 'pending_approval', 422);
         $payroll->transitionTo('approved', ['approved_by' => $request->user()->id]);
 
@@ -154,7 +154,7 @@ class PayrollController extends Controller
 
     public function reject(Request $request, Payroll $payroll): RedirectResponse
     {
-        $this->authorizePayroll($request, $payroll, ['finance_manager']);
+        $this->authorizePayroll($request, $payroll, ['finance_manager', 'super_admin']);
         abort_if($payroll->status !== 'pending_approval', 422);
         $validated = $request->validate(['rejection_note' => ['required', 'string', 'max:2000']]);
         $payroll->transitionTo('needs_review', ['rejection_note' => $validated['rejection_note']]);
@@ -164,7 +164,7 @@ class PayrollController extends Controller
 
     public function disburse(Request $request, Payroll $payroll): RedirectResponse
     {
-        $this->authorizePayroll($request, $payroll, ['finance_manager']);
+        $this->authorizePayroll($request, $payroll, ['finance_manager', 'super_admin']);
         abort_if($payroll->status !== 'approved', 422);
         $request->validate(['proof' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120']]);
         $proof = $request->file('proof')?->store('disbursements', 'local');
