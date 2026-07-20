@@ -159,6 +159,44 @@ class DashboardController extends Controller
                 ? $latestPayroll->payrollItems()->with('employee')->get()
                 : collect();
 
+            // Handle CSV export for a specific period
+            if ($request->input('export') === 'csv' && $request->input('report_period')) {
+                $exportPayroll = $reportPayrolls->firstWhere('period', $request->input('report_period'));
+                if ($exportPayroll) {
+                    $items = $exportPayroll->payrollItems()->with('employee')->get();
+                    $filename = 'payroll-report-' . $exportPayroll->period . '.csv';
+
+                    return response()->streamDownload(function () use ($items, $exportPayroll): void {
+                        $handle = fopen('php://output', 'wb');
+                        fputcsv($handle, [
+                            'Periode', 'Nama', 'NIP', 'Departemen',
+                            'Gaji Pokok', 'Lembur', 'Gross Pay',
+                            'BPJS TK', 'BPJS Kesehatan', 'PPh21',
+                            'Total Potongan', 'Net Pay', 'Status', 'Anomali',
+                        ]);
+                        foreach ($items as $item) {
+                            fputcsv($handle, [
+                                $exportPayroll->period_label,
+                                $item->employee?->name ?? '-',
+                                $item->employee?->nip ?? '-',
+                                $item->employee?->department ?? '-',
+                                (float) $item->basic_salary_snapshot,
+                                (float) $item->overtime_pay,
+                                (float) $item->gross_pay,
+                                (float) $item->bpjs_tk_deduction,
+                                (float) $item->bpjs_kesehatan_deduction,
+                                (float) $item->pph21_deduction,
+                                (float) $item->total_deduction,
+                                (float) $item->net_pay,
+                                $item->status,
+                                $item->has_anomaly ? ($item->anomaly_acknowledged ? 'Acknowledged' : 'Ada Anomali') : 'Bersih',
+                            ]);
+                        }
+                        fclose($handle);
+                    }, $filename, ['Content-Type' => 'text/csv']);
+                }
+            }
+
             $workspaceData = array_merge($workspaceData, [
                 'reportPayrolls'     => $reportPayrolls,
                 'reportLatestPayroll'=> $latestPayroll,
