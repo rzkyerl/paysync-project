@@ -60,9 +60,10 @@ class DashboardController extends Controller
             : $this->loadUserData($user->company_id, $page);
 
         $sharedData = [
-            'isDemoUser' => $isDemoUser,
-            'isEmpty' => $workspaceData['isEmpty'],
-            'companyName' => $user->company?->name ?? 'Workspace',
+            'isDemoUser'          => $isDemoUser,
+            'isEmpty'             => $workspaceData['isEmpty'],
+            'companyName'         => $user->company?->name ?? 'Workspace',
+            'isSuperAdminViewing' => $user->isSuperAdmin(),
         ];
 
         // Preserve the existing, richer role dashboards while Phase 4 updates
@@ -77,6 +78,128 @@ class DashboardController extends Controller
 
         if ($page === 'dashboard-employee') {
             return $this->employee($request)->with($sharedData);
+        }
+
+        // Inject payslips-specific data
+        if ($page === 'payslips' && $user->company_id) {
+            $selectedPeriod = $request->input('period');
+            $publishedPayrolls = Payroll::where('company_id', $user->company_id)
+                ->whereIn('status', ['approved', 'disbursed'])
+                ->orderByDesc('period')
+                ->get();
+
+            $activePayroll = $selectedPeriod
+                ? $publishedPayrolls->firstWhere('period', $selectedPeriod)
+                : $publishedPayrolls->first();
+
+            $payslipItems = $activePayroll
+                ? $activePayroll->payrollItems()->with('employee')->get()
+                : collect();
+
+            $workspaceData = array_merge($workspaceData, [
+                'publishedPayrolls' => $publishedPayrolls,
+                'activePayroll'     => $activePayroll,
+                'payslipItems'      => $payslipItems,
+            ]);
+        }
+
+        // Inject disbursement-specific data
+        if ($page === 'disbursement' && $user->company_id) {
+            $disbursementPayrolls = Payroll::where('company_id', $user->company_id)
+                ->whereIn('status', ['approved', 'disbursed'])
+                ->with(['approver', 'payrollItems'])
+                ->orderByDesc('period')
+                ->get();
+
+            $readyCount      = $disbursementPayrolls->where('status', 'approved')->count();
+            $disbursedCount  = $disbursementPayrolls->where('status', 'disbursed')->count();
+            $successAmount   = $disbursementPayrolls->where('status', 'disbursed')->sum('net_total');
+            $pendingAmount   = $disbursementPayrolls->where('status', 'approved')->sum('net_total');
+
+            $workspaceData = array_merge($workspaceData, [
+                'disbursementPayrolls' => $disbursementPayrolls,
+                'disbReadyCount'       => $readyCount,
+                'disbDisbursedCount'   => $disbursedCount,
+                'disbSuccessAmount'    => $successAmount,
+                'disbPendingAmount'    => $pendingAmount,
+            ]);
+        }
+
+        // Inject reconciliation-specific data
+        if ($page === 'reconciliation' && $user->company_id) {
+            $reconPayrolls = Payroll::where('company_id', $user->company_id)
+                ->whereIn('status', ['approved', 'disbursed'])
+                ->with(['approver', 'payrollItems.employee'])
+                ->orderByDesc('period')
+                ->get();
+
+            $totalNetPay       = $reconPayrolls->sum('net_total');
+            $transferredTotal  = $reconPayrolls->sum(fn ($p) =>
+                $p->payrollItems->where('status', 'transferred')->sum('net_pay')
+            );
+            $difference        = (float)$totalNetPay - (float)$transferredTotal;
+
+            $workspaceData = array_merge($workspaceData, [
+                'reconPayrolls'   => $reconPayrolls,
+                'reconTotalNet'   => $totalNetPay,
+                'reconTransferred'=> $transferredTotal,
+                'reconDifference' => $difference,
+            ]);
+        }
+
+        // Inject reports-specific data
+        if ($page === 'reports' && $user->company_id) {
+            $reportPayrolls = Payroll::where('company_id', $user->company_id)
+                ->with(['payrollItems.employee', 'submitter', 'approver'])
+                ->orderByDesc('period')
+                ->get();
+
+            $latestPayroll     = $reportPayrolls->first();
+            $reportPayrollItems = $latestPayroll
+                ? $latestPayroll->payrollItems()->with('employee')->get()
+                : collect();
+
+            $workspaceData = array_merge($workspaceData, [
+                'reportPayrolls'     => $reportPayrolls,
+                'reportLatestPayroll'=> $latestPayroll,
+                'reportPayrollItems' => $reportPayrollItems,
+            ]);
+        }
+
+        // Inject audit-specific data
+        if ($page === 'audit' && $user->company_id) {
+            $auditLogs = \App\Models\SettingsAuditLog::where('company_id', $user->company_id)
+                ->with('user')
+                ->orderByDesc('changed_at')
+                ->paginate(30);
+
+            $workspaceData = array_merge($workspaceData, [
+                'auditLogs' => $auditLogs,
+            ]);
+        }
+
+        // Inject attendance-specific data
+        if ($page === 'attendance' && $user->company_id) {
+            $attendancePayrolls = Payroll::where('company_id', $user->company_id)
+                ->orderByDesc('period')
+                ->get(['id', 'period', 'period_label', 'status']);
+
+            $selectedPayrollId  = request('payroll_id');
+            $attendancePayroll  = $selectedPayrollId
+                ? $attendancePayrolls->firstWhere('id', $selectedPayrollId)
+                : $attendancePayrolls->first();
+
+            $attendanceRecords  = $attendancePayroll
+                ? \App\Models\AttendanceRecord::where('payroll_id', $attendancePayroll->id)
+                    ->with('employee')
+                    ->get()
+                : collect();
+
+            $workspaceData = array_merge($workspaceData, [
+                'attendancePayrolls' => $attendancePayrolls,
+                'attendancePayroll'  => $attendancePayroll,
+                'attendanceRecords'  => $attendanceRecords,
+            ]);
         }
 
         return view('payflow.app', array_merge($workspaceData, $sharedData, [
@@ -98,7 +221,7 @@ class DashboardController extends Controller
             'payroll' => $company->payrolls()->where('status', 'needs_review')->latest()->first(),
             'approvalQueue' => $company->payrolls()
                 ->with('submitter')
-                ->whereIn('status', ['needs_review', 'pending_approval'])
+                ->where('status', 'pending_approval')
                 ->latest()
                 ->get(),
             'kpis' => $this->buildKpis($company, $page),
@@ -131,7 +254,7 @@ class DashboardController extends Controller
             'payroll' => $company->payrolls()->latest()->first(),
             'approvalQueue' => $company->payrolls()
                 ->with('submitter')
-                ->whereIn('status', ['needs_review', 'pending_approval'])
+                ->where('status', 'pending_approval')
                 ->latest()
                 ->get(),
             'kpis' => $this->buildKpis($company, $page),
