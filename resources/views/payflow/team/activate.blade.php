@@ -5,7 +5,7 @@
     <title>Aktifkan Akun - PaySync</title>
     @include('payflow.partials.styles')
 </head>
-<body><main class="auth-page"><section class="auth-main" style="width:100%;"><div class="card auth-card" style="margin:auto;">
+<body><main class="auth-main" style="min-height:100vh;"><div class="card auth-card">
     @include('payflow.partials.brand')
     <h1 style="margin-top:24px;">Aktifkan Akun Anda</h1>
     <p class="muted">Buat password untuk {{ $member->email }} agar dapat mengakses workspace PaySync.</p>
@@ -16,5 +16,5 @@
         @error('password')<small class="auth-error">{{ $message }}</small>@enderror
         <button class="btn btn-primary" type="submit">Aktifkan dan Masuk</button>
     </form>
-</div></section></main></body>
+</div></main></body>
 </html>

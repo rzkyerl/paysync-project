@@ -12,21 +12,31 @@
     <div x-show="!loading" x-cloak>
 
 @if($isEmpty ?? false)
-    <div class="grid grid-4">
-        @foreach(['Menunggu Approval', 'Total Disetujui', 'Transfer Berhasil', 'Transfer Gagal'] as $label)
-            <div class="kpi-modern kpi-blue">
-                <div class="kpi-label">{{ $label }}</div>
-                <div class="kpi-value">—</div>
-                <div class="kpi-footer"><span class="badge">Belum ada data</span></div>
+    {{-- ── Empty State: belum ada data perusahaan ── --}}
+    <div style="display:grid; place-items:center; min-height:420px;">
+        <div style="text-align:center; max-width:460px; padding:20px;">
+            <div style="width:72px; height:72px; border-radius:20px; background:var(--brand-soft); display:flex; align-items:center; justify-content:center; margin:0 auto 20px;">
+                <svg width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="color:var(--brand);"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
             </div>
-        @endforeach
+            <h2 style="margin:0 0 10px; font-size:22px; font-weight:800; color:var(--navy); font-family:var(--font-display); letter-spacing:-0.02em;">Belum ada data untuk ditampilkan</h2>
+            <p class="muted" style="margin:0 0 24px; font-size:14px; line-height:1.7;">
+                Dashboard Finance akan aktif setelah HR menyiapkan data karyawan dan memproses payroll pertama.
+            </p>
+            <div style="display:flex; flex-direction:column; gap:10px; align-items:center;">
+                <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+                    <a href="{{ url('/app/approval') }}" class="btn btn-primary">
+                        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                        Cek Approval Queue
+                    </a>
+                    <a href="{{ url('/app/disbursement') }}" class="btn btn-secondary">
+                        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                        Batch Transfer
+                    </a>
+                </div>
+                <p class="muted" style="font-size:12px; margin:4px 0 0;">Hubungi HR Manager untuk memulai proses payroll.</p>
+            </div>
+        </div>
     </div>
-    <x-empty-state
-        style="margin-top:16px;"
-        icon="approval"
-        title="Belum ada payroll yang perlu disetujui"
-        description="Approval queue akan muncul setelah HR mengirim payroll untuk ditinjau."
-    />
 @else
 
 @if(isset($error) && $error)

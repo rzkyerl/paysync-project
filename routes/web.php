@@ -62,6 +62,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/app/payroll/{payroll}/approve', [PayrollController::class, 'approve'])->middleware('role:finance_manager,super_admin')->name('payroll.approve');
     Route::post('/app/payroll/{payroll}/reject', [PayrollController::class, 'reject'])->middleware('role:finance_manager,super_admin')->name('payroll.reject');
     Route::post('/app/payroll/{payroll}/disburse', [PayrollController::class, 'disburse'])->middleware('role:finance_manager,super_admin')->name('payroll.disburse');
+    Route::get('/app/payroll/{payroll}/transfer-file', [PayrollController::class, 'downloadTransferFile'])->middleware('role:finance_manager,super_admin')->name('payroll.transfer-file');
     Route::get('/app/payroll/{payroll}/reconcile', [PayrollController::class, 'reconcile'])->name('payroll.reconcile');
     Route::get('/app/payroll/{payroll}/payslip/{employee}', [PayrollController::class, 'payslip'])->name('payroll.payslip');
     Route::get('/app/my-payslips', [PayrollController::class, 'myPayslips'])->middleware('role:employee')->name('payroll.my-payslips');
@@ -82,5 +83,6 @@ Route::middleware('auth')->group(function () {
 
     // Catch-all for remaining app pages (attendance, approval, payslips, disbursement,
     // reconciliation, reports, settings, audit) — placed last so specific routes above take precedence
+    Route::get('/app/reports/{payroll}', [DashboardController::class, 'reportDetail'])->name('reports.detail');
     Route::get('/app/{page?}', [DashboardController::class, 'show'])->name('app');
 });

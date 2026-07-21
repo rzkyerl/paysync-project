@@ -522,17 +522,22 @@
                     default            => ucfirst($p->status),
                 };
                 $isActive = $activePayroll?->id === $p->id;
+                $periodUrl = url('/app/reports/' . $p->id);
             @endphp
-            <div style="display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:9px; margin-bottom:4px; background:{{ $isActive ? 'var(--brand-soft)' : '#fff' }}; border:1px solid {{ $isActive ? 'var(--brand-line)' : 'var(--line)' }};">
+            <a href="{{ $periodUrl }}"
+               style="display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:9px; margin-bottom:4px; text-decoration:none;
+                      background:{{ $isActive ? 'var(--brand-soft)' : '#fff' }};
+                      border:1px solid {{ $isActive ? 'var(--brand-line)' : 'var(--line)' }};
+                      transition:background .12s, border-color .12s; min-height:0;"
+               onmouseover="if(!{{ $isActive ? 'true' : 'false' }}) { this.style.background='var(--brand-soft)'; this.style.borderColor='var(--brand-line)'; }"
+               onmouseout="if(!{{ $isActive ? 'true' : 'false' }}) { this.style.background='#fff'; this.style.borderColor='var(--line)'; }">
                 <div style="flex:1; min-width:0;">
                     <div style="font-size:13px; font-weight:700; color:{{ $isActive ? 'var(--brand)' : 'var(--navy)' }};">{{ $p->period_label }}</div>
                     <div class="muted" style="font-size:12px;">{{ $p->employee_count }} karyawan · Net {{ fmtRpt((float)$p->net_total) }}</div>
                 </div>
                 <span class="badge {{ $pBadge }}" style="font-size:10px;">{{ $pLabel }}</span>
-                <a href="{{ route('app', 'reports') }}?report_period={{ $p->period }}"
-                   style="font-size:12px; color:var(--brand); font-weight:700; text-decoration:none; white-space:nowrap;"
-                   title="Lihat periode {{ $p->period_label }}">Lihat →</a>
-            </div>
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color:{{ $isActive ? 'var(--brand)' : 'var(--muted)' }}; flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg>
+            </a>
             @endforeach
         </div>
     </div>

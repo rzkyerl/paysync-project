@@ -51,6 +51,11 @@ class DashboardController extends Controller
 
         $isDemoUser = $user->isDemoUser();
 
+        // Non-demo users without a company must complete onboarding first
+        if (! $isDemoUser && ! $user->company_id) {
+            return redirect()->route('onboarding');
+        }
+
         if ($isDemoUser && ! $user->company_id) {
             Log::warning("Demo user {$user->email} memiliki company_id null");
         }
@@ -905,5 +910,81 @@ class DashboardController extends Controller
         ];
 
         return view('payflow.app', array_merge(['page' => 'dashboard-employee'], $data));
+    }
+
+    /**
+     * Payroll Report Detail — full breakdown for a single payroll period.
+     */
+    public function reportDetail(Request $request, Payroll $payroll): mixed
+    {
+        $user = $request->user();
+
+        abort_if(! $user->hasAnyRole(['super_admin', 'hr_manager', 'finance_manager']), 403);
+        abort_if($user->company_id === null || $payroll->company_id !== $user->company_id, 404);
+
+        $payroll->load(['payrollItems.employee', 'submitter', 'approver']);
+
+        // CSV export
+        if ($request->input('export') === 'csv') {
+            $filename = 'payroll-report-' . $payroll->period . '.csv';
+
+            return response()->streamDownload(function () use ($payroll): void {
+                $handle = fopen('php://output', 'wb');
+                fputcsv($handle, ['Periode','Nama','NIP','Departemen','Gaji Pokok','Lembur','Gross Pay','BPJS TK','BPJS Kesehatan','PPh21','Total Potongan','Net Pay','Status','Anomali']);
+                foreach ($payroll->payrollItems as $item) {
+                    fputcsv($handle, [
+                        $payroll->period_label,
+                        $item->employee?->name ?? '-',
+                        $item->employee?->nip ?? '-',
+                        $item->employee?->department ?? '-',
+                        (float) $item->basic_salary_snapshot,
+                        (float) $item->overtime_pay,
+                        (float) $item->gross_pay,
+                        (float) $item->bpjs_tk_deduction,
+                        (float) $item->bpjs_kesehatan_deduction,
+                        (float) $item->pph21_deduction,
+                        (float) $item->total_deduction,
+                        (float) $item->net_pay,
+                        $item->status,
+                        $item->has_anomaly ? ($item->anomaly_acknowledged ? 'Acknowledged' : 'Ada Anomali') : 'Bersih',
+                    ]);
+                }
+                fclose($handle);
+            }, $filename, ['Content-Type' => 'text/csv']);
+        }
+
+        // Sibling periods for navigation
+        $allPayrolls = Payroll::where('company_id', $user->company_id)
+            ->orderByDesc('period')
+            ->get(['id', 'period', 'period_label', 'status', 'net_total', 'employee_count']);
+
+        $currentIndex = $allPayrolls->search(fn ($p) => $p->id === $payroll->id);
+        $prevPayroll  = $currentIndex !== false && $currentIndex < $allPayrolls->count() - 1
+            ? $allPayrolls->get($currentIndex + 1) : null;
+        $nextPayroll  = $currentIndex !== false && $currentIndex > 0
+            ? $allPayrolls->get($currentIndex - 1) : null;
+
+        // Deduction breakdown totals
+        $items = $payroll->payrollItems;
+        $breakdown = [
+            'bpjs_tk'    => (float) $items->sum('bpjs_tk_deduction'),
+            'bpjs_kes'   => (float) $items->sum('bpjs_kesehatan_deduction'),
+            'pph21'      => (float) $items->sum('pph21_deduction'),
+            'overtime'   => (float) $items->sum('overtime_pay'),
+            'gross'      => (float) $items->sum('gross_pay'),
+            'net'        => (float) $items->sum('net_pay'),
+            'deduction'  => (float) $items->sum('total_deduction'),
+        ];
+
+        return view('payflow.pages.report-detail', [
+            'payroll'             => $payroll,
+            'allPayrolls'         => $allPayrolls,
+            'prevPayroll'         => $prevPayroll,
+            'nextPayroll'         => $nextPayroll,
+            'breakdown'           => $breakdown,
+            'isDemoUser'          => $user->isDemoUser(),
+            'companyName'         => $user->company?->name ?? 'Workspace',
+            'isSuperAdminViewing' => $user->isSuperAdmin(),
+        ]);
     }
 }

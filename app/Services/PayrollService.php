@@ -23,28 +23,56 @@ class PayrollService
 
     public const PPH21_RATE = 0.05;
 
+    /**
+     * Jumlah hari kerja default dalam satu bulan (jika tidak ada data kehadiran).
+     * HR bisa override via attendance record work_days.
+     */
+    public const DEFAULT_WORK_DAYS = 22;
+
     public function calculateItemForEmployee(Employee $employee, ?AttendanceRecord $attendance): array
     {
-        $basicSalary = (float) $employee->basic_salary;
-        $overtimeHours = (float) ($attendance?->overtime_hours ?? 0);
-        $overtimePay = $overtimeHours * ($basicSalary / self::OVERTIME_DIVISOR * self::OVERTIME_MULTIPLIER);
-        $grossPay = $basicSalary + $overtimePay;
-        $bpjsTk = $grossPay * self::BPJS_TK_RATE;
+        $basicSalary  = (float) $employee->basic_salary;
+        $workDays     = (int) ($attendance?->work_days ?? self::DEFAULT_WORK_DAYS);
+        $daysPresent  = (int) ($attendance?->days_present ?? $workDays); // default: hadir penuh
+        $leavedays    = (int) ($attendance?->leave_days ?? 0);
+        $overtimeHours= (float) ($attendance?->overtime_hours ?? 0);
+
+        // Hari tidak hadir = hari kerja − hari hadir − hari cuti
+        // leave_days dianggap cuti berbayar (tidak dipotong), hanya absent murni yang dipotong
+        $absentDays   = max(0, $workDays - $daysPresent - $leavedays);
+
+        // Potongan absensi proporsional: (gaji pokok / hari kerja) × hari tidak hadir
+        $absenceDeduction = $workDays > 0
+            ? ($basicSalary / $workDays) * $absentDays
+            : 0;
+
+        // Gaji pokok efektif setelah potongan absensi
+        $effectiveSalary = $basicSalary - $absenceDeduction;
+
+        // Lembur dihitung dari gaji pokok penuh (bukan efektif), sesuai standar UU
+        $overtimePay  = $overtimeHours * ($basicSalary / self::OVERTIME_DIVISOR * self::OVERTIME_MULTIPLIER);
+
+        $grossPay     = $effectiveSalary + $overtimePay;
+
+        $bpjsTk  = $grossPay * self::BPJS_TK_RATE;
         $bpjsKes = $grossPay * self::BPJS_KES_RATE;
-        $pph21 = $grossPay > self::PPH21_THRESHOLD
+        $pph21   = $grossPay > self::PPH21_THRESHOLD
             ? ($grossPay - self::PPH21_THRESHOLD) * self::PPH21_RATE
             : 0;
         $totalDeduction = $bpjsTk + $bpjsKes + $pph21;
 
         return [
-            'gross_pay' => round($grossPay, 2),
-            'basic_salary_snapshot' => round($basicSalary, 2),
-            'overtime_pay' => round($overtimePay, 2),
-            'bpjs_tk_deduction' => round($bpjsTk, 2),
+            'gross_pay'                => round($grossPay, 2),
+            'basic_salary_snapshot'    => round($basicSalary, 2),
+            'overtime_pay'             => round($overtimePay, 2),
+            'absence_deduction'        => round($absenceDeduction, 2),
+            'days_present_snapshot'    => $daysPresent,
+            'work_days_snapshot'       => $workDays,
+            'bpjs_tk_deduction'        => round($bpjsTk, 2),
             'bpjs_kesehatan_deduction' => round($bpjsKes, 2),
-            'pph21_deduction' => round($pph21, 2),
-            'total_deduction' => round($totalDeduction, 2),
-            'net_pay' => round($grossPay - $totalDeduction, 2),
+            'pph21_deduction'          => round($pph21, 2),
+            'total_deduction'          => round($totalDeduction, 2),
+            'net_pay'                  => round($grossPay - $totalDeduction, 2),
         ];
     }
 
