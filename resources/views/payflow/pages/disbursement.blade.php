@@ -142,7 +142,69 @@
                                         <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                                         Detail
                                     </a>
-                                    @if($isReady && auth()->user()->hasAnyRole(['finance_manager', 'super_admin']))
+                                    @if(in_array($payroll->status, ['approved', 'disbursed']) && auth()->user()->hasAnyRole(['finance_manager', 'super_admin']))
+                                        {{-- Download Transfer File --}}
+                                        <div x-data="{ dlOpen: false }">
+                                            <button type="button" @click="dlOpen = true"
+                                                class="btn btn-secondary" style="padding:5px 10px; font-size:12px;">
+                                                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 4v12"/><path d="m7 11 5 5 5-5"/><path d="M5 20h14"/></svg>
+                                                File Transfer
+                                            </button>
+                                            <template x-teleport="body">
+                                            <div x-show="dlOpen" x-cloak class="modal-overlay"
+                                                @click.self="dlOpen = false"
+                                                @keydown.window.escape="dlOpen = false"
+                                                role="dialog" aria-modal="true">
+                                                <div class="modal-dialog" x-transition style="max-width:420px;">
+                                                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;">
+                                                        <div>
+                                                            <div class="modal-title" style="margin:0;">Download File Transfer</div>
+                                                            <div class="muted" style="font-size:13px; margin-top:2px;">{{ $payroll->period_label }} · {{ $payroll->employee_count }} karyawan</div>
+                                                        </div>
+                                                        <button type="button" @click="dlOpen = false" style="width:32px;height:32px;border-radius:8px;border:1px solid var(--line);background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--muted);">
+                                                            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                                        </button>
+                                                    </div>
+
+                                                    {{-- Info box --}}
+                                                    <div style="padding:10px 12px; background:var(--brand-soft); border:1px solid var(--brand-line); border-radius:10px; font-size:13px; color:var(--brand); margin-bottom:16px; line-height:1.6;">
+                                                        Download file CSV lalu upload ke internet banking perusahaan untuk melakukan bulk transfer gaji.
+                                                    </div>
+
+                                                    {{-- Bank format options --}}
+                                                    <div style="display:grid; gap:8px; margin-bottom:20px;">
+                                                        @foreach([
+                                                            ['generic', 'Format Umum',  'Cocok untuk semua bank, berisi semua kolom lengkap',       '#6366f1'],
+                                                            ['bca',     'BCA',          'KlikBCA Bisnis — Bulk Transfer',                            '#0066cc'],
+                                                            ['mandiri', 'Mandiri',      'Mandiri Cash Management (MCM)',                             '#003d7a'],
+                                                            ['bni',     'BNI',          'BNI Direct Payroll',                                        '#e47900'],
+                                                            ['bri',     'BRI',          'BRImo Business / BRI Payroll',                              '#006e36'],
+                                                        ] as [$fmt, $name, $desc, $color])
+                                                        <a href="{{ route('payroll.transfer-file', $payroll) }}?format={{ $fmt }}"
+                                                           style="display:flex; align-items:center; gap:12px; padding:11px 14px; border-radius:10px; border:1px solid var(--line); background:#fff; text-decoration:none; transition:background .12s, border-color .12s;"
+                                                           onmouseover="this.style.background='var(--brand-soft)';this.style.borderColor='var(--brand-line)'"
+                                                           onmouseout="this.style.background='#fff';this.style.borderColor='var(--line)'">
+                                                            <div style="width:36px; height:36px; border-radius:9px; background:{{ $color }}14; border:1px solid {{ $color }}30; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                                                <svg width="16" height="16" fill="none" stroke="{{ $color }}" stroke-width="2" viewBox="0 0 24 24"><path d="M12 4v12"/><path d="m7 11 5 5 5-5"/><path d="M5 20h14"/></svg>
+                                                            </div>
+                                                            <div style="flex:1; min-width:0;">
+                                                                <div style="font-size:13px; font-weight:700; color:var(--navy);">{{ $name }}</div>
+                                                                <div class="muted" style="font-size:12px;">{{ $desc }}</div>
+                                                            </div>
+                                                            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color:var(--muted); flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg>
+                                                        </a>
+                                                        @endforeach
+                                                    </div>
+
+                                                    <div style="font-size:12px; color:var(--muted); text-align:center;">
+                                                        File CSV · {{ $payroll->employee_count }} baris · Total {{ fmtJt((float)$payroll->net_total) }}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            </template>
+                                        </div>
+
+                                        {{-- Disburse button --}}
                                         <div x-data="{ open: false }">
                                             <button type="button" @click="open = true"
                                                 class="btn btn-primary" style="padding:5px 10px; font-size:12px; background:#16a34a; border-color:#16a34a;">

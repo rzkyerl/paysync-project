@@ -20,23 +20,33 @@
 @endif
 
 @if($isEmpty ?? false)
-    <div class="grid grid-4">
-        @foreach(['Karyawan Aktif', 'Kehadiran Periode Ini', 'Status Payroll', 'Estimasi Take-home Pay'] as $label)
-            <div class="kpi-modern kpi-blue">
-                <div class="kpi-label">{{ $label }}</div>
-                <div class="kpi-value">—</div>
-                <div class="kpi-footer"><span class="badge">Belum ada data</span></div>
+    {{-- ── Empty State: belum ada karyawan ── --}}
+    <div style="display:grid; place-items:center; min-height:420px;">
+        <div style="text-align:center; max-width:480px; padding:20px;">
+            <div style="width:72px; height:72px; border-radius:20px; background:var(--brand-soft); display:flex; align-items:center; justify-content:center; margin:0 auto 20px;">
+                <svg width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="color:var(--brand);"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
             </div>
-        @endforeach
+            <h2 style="margin:0 0 10px; font-size:22px; font-weight:800; color:var(--navy); font-family:var(--font-display); letter-spacing:-0.02em;">Mulai dengan menambahkan karyawan</h2>
+            <p class="muted" style="margin:0 0 24px; font-size:14px; line-height:1.7;">
+                Tambahkan data karyawan terlebih dahulu — bisa satu per satu atau import sekaligus via CSV.
+                Setelah itu, proses payroll pertama bisa dimulai.
+            </p>
+            <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+                @if(!($isSuperAdminViewing ?? false))
+                <a href="{{ route('employees.create') }}" class="btn btn-primary">
+                    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Tambah Karyawan
+                </a>
+                <a href="{{ route('employees.import') }}" class="btn btn-secondary">
+                    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    Import CSV
+                </a>
+                @else
+                <p class="muted" style="font-size:13px; margin:0;">Mode Pantau — aksi tersedia untuk HR Manager.</p>
+                @endif
+            </div>
+        </div>
     </div>
-    <x-empty-state
-        style="margin-top:16px;"
-        icon="users"
-        title="Belum ada karyawan"
-        description="Tambahkan karyawan pertama untuk mulai menyiapkan payroll perusahaan."
-        :cta-label="$isSuperAdminViewing ? null : 'Tambah Karyawan'"
-        :cta-url="$isSuperAdminViewing ? null : route('employees.create')"
-    />
 @else
 
 @if ($error ?? null)

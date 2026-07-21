@@ -107,8 +107,9 @@ class PayrollController extends Controller
 
         return response()->streamDownload(function (): void {
             $handle = fopen('php://output', 'wb');
-            fputcsv($handle, ['nip', 'days_present', 'overtime_hours', 'leave_days']);
-            fputcsv($handle, ['EMP-0001', 22, 0, 0]);
+            fputcsv($handle, ['nip', 'work_days', 'days_present', 'overtime_hours', 'leave_days']);
+            fputcsv($handle, ['EMP-0001', 22, 22, 0, 0]);
+            fputcsv($handle, ['EMP-0002', 22, 20, 2, 1]);
             fclose($handle);
         }, 'attendance-template.csv', ['Content-Type' => 'text/csv']);
     }
@@ -181,6 +182,132 @@ class PayrollController extends Controller
         $transferredTotal = $payroll->payrollItems()->where('status', 'transferred')->sum('net_pay');
 
         return view('payflow.payroll.reconcile', compact('payroll', 'transferredTotal'));
+    }
+
+    /**
+     * Download bulk transfer file (CSV) sesuai format bank yang dipilih.
+     * Format yang didukung: generic (default), bca, mandiri, bni, bri
+     */
+    public function downloadTransferFile(Request $request, Payroll $payroll)
+    {
+        $this->authorizePayroll($request, $payroll, ['finance_manager', 'super_admin']);
+        abort_if(! in_array($payroll->status, ['approved', 'disbursed'], true), 422);
+
+        $format = in_array($request->input('format'), ['generic', 'bca', 'mandiri', 'bni', 'bri'], true)
+            ? $request->input('format')
+            : 'generic';
+
+        $payroll->load('payrollItems.employee');
+        $items    = $payroll->payrollItems;
+        $filename = 'transfer-' . $payroll->period . '-' . $format . '.csv';
+
+        return response()->streamDownload(function () use ($items, $payroll, $format): void {
+            $handle = fopen('php://output', 'wb');
+
+            match ($format) {
+                'bca' => $this->writeBcaFormat($handle, $items, $payroll),
+                'mandiri' => $this->writeMandiriFormat($handle, $items, $payroll),
+                'bni' => $this->writeBniFormat($handle, $items, $payroll),
+                'bri' => $this->writeBriFormat($handle, $items, $payroll),
+                default => $this->writeGenericFormat($handle, $items, $payroll),
+            };
+
+            fclose($handle);
+        }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
+    /** Format generik — bisa diimport ke semua internet banking */
+    private function writeGenericFormat($handle, $items, Payroll $payroll): void
+    {
+        fputcsv($handle, ['# PaySync Bulk Transfer File']);
+        fputcsv($handle, ['# Periode: ' . $payroll->period_label]);
+        fputcsv($handle, ['# Total Karyawan: ' . $payroll->employee_count]);
+        fputcsv($handle, ['# Total Net Pay: ' . number_format((float) $payroll->net_total, 2, '.', '')]);
+        fputcsv($handle, ['# Dibuat: ' . now()->format('d/m/Y H:i')]);
+        fputcsv($handle, []);
+        fputcsv($handle, ['No', 'Nama Karyawan', 'NIP', 'Nama Bank', 'No. Rekening', 'Nominal', 'Keterangan']);
+
+        $no = 1;
+        foreach ($items as $item) {
+            fputcsv($handle, [
+                $no++,
+                $item->employee?->name ?? '-',
+                $item->employee?->nip ?? '-',
+                $item->employee?->bank_name ?? '-',
+                $item->employee?->bank_account_number ?? '-',
+                number_format((float) $item->net_pay, 2, '.', ''),
+                'Gaji ' . $payroll->period_label,
+            ]);
+        }
+
+        fputcsv($handle, []);
+        fputcsv($handle, ['', '', '', '', 'TOTAL', number_format((float) $items->sum('net_pay'), 2, '.', ''), '']);
+    }
+
+    /** Format BCA Bulk Payment (KlikBCA Bisnis) */
+    private function writeBcaFormat($handle, $items, Payroll $payroll): void
+    {
+        // BCA format: No, Nama, No Rekening, Nominal, Berita
+        fputcsv($handle, ['No', 'Nama Penerima', 'Nomor Rekening', 'Nominal', 'Berita Transfer']);
+        foreach ($items as $item) {
+            fputcsv($handle, [
+                $item->employee?->nip ?? '-',
+                $item->employee?->name ?? '-',
+                $item->employee?->bank_account_number ?? '-',
+                number_format((float) $item->net_pay, 0, '', ''),
+                'GAJI ' . strtoupper($payroll->period_label),
+            ]);
+        }
+    }
+
+    /** Format Mandiri Cash Management */
+    private function writeMandiriFormat($handle, $items, Payroll $payroll): void
+    {
+        // Mandiri format: sequence, beneficiary name, account no, amount, currency, remark
+        fputcsv($handle, ['SEQ', 'BENEFICIARY_NAME', 'ACCOUNT_NUMBER', 'AMOUNT', 'CURRENCY', 'REMARK']);
+        $seq = 1;
+        foreach ($items as $item) {
+            fputcsv($handle, [
+                str_pad($seq++, 5, '0', STR_PAD_LEFT),
+                strtoupper($item->employee?->name ?? '-'),
+                $item->employee?->bank_account_number ?? '-',
+                number_format((float) $item->net_pay, 2, '.', ''),
+                'IDR',
+                'SALARY ' . $payroll->period,
+            ]);
+        }
+    }
+
+    /** Format BNI Direct Debit / Payroll */
+    private function writeBniFormat($handle, $items, Payroll $payroll): void
+    {
+        fputcsv($handle, ['NO', 'NAMA', 'NO_REKENING', 'NOMINAL', 'KETERANGAN']);
+        $no = 1;
+        foreach ($items as $item) {
+            fputcsv($handle, [
+                $no++,
+                $item->employee?->name ?? '-',
+                $item->employee?->bank_account_number ?? '-',
+                number_format((float) $item->net_pay, 0, '', ''),
+                'GAJI ' . $payroll->period_label,
+            ]);
+        }
+    }
+
+    /** Format BRI Payroll */
+    private function writeBriFormat($handle, $items, Payroll $payroll): void
+    {
+        fputcsv($handle, ['NOMOR', 'NAMA_PENERIMA', 'REKENING', 'JUMLAH', 'BERITA']);
+        $no = 1;
+        foreach ($items as $item) {
+            fputcsv($handle, [
+                $no++,
+                $item->employee?->name ?? '-',
+                $item->employee?->bank_account_number ?? '-',
+                number_format((float) $item->net_pay, 0, '', ''),
+                'GAJI ' . strtoupper($payroll->period_label),
+            ]);
+        }
     }
 
     public function payslip(Request $request, Payroll $payroll, Employee $employee): View
