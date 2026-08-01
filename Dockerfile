@@ -60,8 +60,8 @@ COPY --from=frontend /app/public/build ./public/build
 # Copy application source
 COPY . .
 
-# Replace .env with production template (actual values injected via Render env vars)
-RUN cp .env.prod .env
+# Create placeholder .env (values injected via Render environment variables at runtime)
+RUN touch .env
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html \

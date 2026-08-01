@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Employee;
 use App\Models\Payroll;
 use App\Models\PayrollItem;
+use App\Services\ActivityLogger;
 use App\Services\AttendanceCsvImporter;
+use App\Services\NotificationService;
 use App\Services\PayrollService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -65,6 +67,11 @@ class PayrollController extends Controller
             'status' => 'draft', 'employee_count' => 0, 'gross_total' => 0, 'deduction_total' => 0, 'net_total' => 0,
         ]);
 
+        ActivityLogger::record($request, 'payroll', 'payroll.created',
+            "Payroll {$payroll->period_label} dibuat",
+            'payroll', $payroll->id, ['period' => $payroll->period]
+        );
+
         return redirect()->route('payroll.show', $payroll)->with('status', 'Payroll draft berhasil dibuat.');
     }
 
@@ -80,10 +87,18 @@ class PayrollController extends Controller
         ]);
     }
 
-    public function importAttendance(Request $request, Payroll $payroll): View
+    public function importAttendance(Request $request, Payroll $payroll): View|RedirectResponse
     {
         $this->authorizePayroll($request, $payroll, ['hr_manager']);
-        abort_if(! in_array($payroll->status, ['draft', 'needs_review'], true), 422);
+
+        if (! in_array($payroll->status, ['draft', 'needs_review'], true)) {
+            session()->flash('toast', [
+                'type'    => 'warning',
+                'message' => "Payroll {$payroll->period_label} sudah berstatus ".ucfirst(str_replace('_', ' ', $payroll->status))." dan tidak bisa diubah.",
+            ]);
+
+            return redirect()->route('app', 'attendance');
+        }
 
         return view('payflow.payroll.attendance-import', compact('payroll'));
     }
@@ -95,8 +110,31 @@ class PayrollController extends Controller
         $request->validate(['file' => ['required', 'file', 'extensions:csv', 'mimes:csv,txt', 'max:2048']]);
         $result = $importer->import($request->file('file'), $payroll);
         if (! $result->successful()) {
+            app(NotificationService::class)->notifyUser(
+                $request->user(),
+                'attendance.import_failed',
+                'Import kehadiran gagal',
+                count($result->errors).' masalah ditemukan pada file CSV.',
+                route('payroll.attendance.import', $payroll, false),
+                ['payroll_id' => $payroll->id, 'error_count' => count($result->errors)],
+            );
+
             return back()->with('import_errors', $result->errors);
         }
+
+        ActivityLogger::record($request, 'attendance', 'attendance.imported',
+            "Import {$result->imported} record kehadiran — {$payroll->period_label}",
+            'payroll', $payroll->id, ['count' => $result->imported, 'period' => $payroll->period]
+        );
+
+        app(NotificationService::class)->notifyUser(
+            $request->user(),
+            'attendance.imported',
+            'Import kehadiran berhasil',
+            "{$result->imported} record kehadiran {$payroll->period_label} berhasil diimport.",
+            route('payroll.show', $payroll, false),
+            ['payroll_id' => $payroll->id, 'count' => $result->imported],
+        );
 
         return redirect()->route('payroll.show', $payroll)->with('status', $result->imported.' record kehadiran berhasil diimport.');
     }
@@ -120,6 +158,27 @@ class PayrollController extends Controller
         abort_if(! in_array($payroll->status, ['draft', 'needs_review'], true), 422);
         $service->calculate($payroll);
 
+        ActivityLogger::record($request, 'payroll', 'payroll.calculated',
+            "Payroll {$payroll->period_label} dikalkulasi",
+            'payroll', $payroll->id, ['period' => $payroll->period]
+        );
+
+        $anomalyCount = $payroll->payrollItems()
+            ->where('has_anomaly', true)
+            ->where('anomaly_acknowledged', false)
+            ->count();
+
+        if ($anomalyCount > 0) {
+            app(NotificationService::class)->notifyUser(
+                $request->user(),
+                'payroll.anomaly_detected',
+                'Anomali payroll ditemukan',
+                "{$anomalyCount} anomali pada payroll {$payroll->period_label} perlu ditinjau.",
+                route('payroll.show', $payroll, false),
+                ['payroll_id' => $payroll->id, 'count' => $anomalyCount],
+            );
+        }
+
         return redirect()->route('payroll.show', $payroll)->with('status', 'Payroll berhasil dihitung dan masuk Needs Review.');
     }
 
@@ -141,6 +200,21 @@ class PayrollController extends Controller
         }
         $payroll->transitionTo('pending_approval', ['submitted_by' => $request->user()->id]);
 
+        ActivityLogger::record($request, 'payroll', 'payroll.submitted',
+            "Payroll {$payroll->period_label} diajukan untuk persetujuan",
+            'payroll', $payroll->id, ['period' => $payroll->period]
+        );
+
+        app(NotificationService::class)->notifyRoles(
+            $payroll->company_id,
+            ['finance_manager', 'super_admin'],
+            'payroll.awaiting_approval',
+            'Payroll menunggu persetujuan',
+            "Payroll {$payroll->period_label} siap ditinjau dan disetujui.",
+            route('payroll.show', $payroll, false),
+            ['payroll_id' => $payroll->id, 'period' => $payroll->period],
+        );
+
         return back()->with('status', 'Payroll berhasil diajukan untuk persetujuan.');
     }
 
@@ -149,6 +223,22 @@ class PayrollController extends Controller
         $this->authorizePayroll($request, $payroll, ['finance_manager', 'super_admin']);
         abort_if($payroll->status !== 'pending_approval', 422);
         $payroll->transitionTo('approved', ['approved_by' => $request->user()->id]);
+
+        ActivityLogger::record($request, 'payroll', 'payroll.approved',
+            "Payroll {$payroll->period_label} disetujui",
+            'payroll', $payroll->id,
+            ['period' => $payroll->period, 'net_total' => (float) $payroll->net_total]
+        );
+
+        app(NotificationService::class)->notifyRoles(
+            $payroll->company_id,
+            ['hr_manager'],
+            'payroll.approved',
+            'Payroll disetujui',
+            "Payroll {$payroll->period_label} telah disetujui dan siap disalurkan.",
+            route('payroll.show', $payroll, false),
+            ['payroll_id' => $payroll->id, 'period' => $payroll->period],
+        );
 
         return back()->with('status', 'Payroll berhasil disetujui.');
     }
@@ -159,6 +249,22 @@ class PayrollController extends Controller
         abort_if($payroll->status !== 'pending_approval', 422);
         $validated = $request->validate(['rejection_note' => ['required', 'string', 'max:2000']]);
         $payroll->transitionTo('needs_review', ['rejection_note' => $validated['rejection_note']]);
+
+        ActivityLogger::record($request, 'payroll', 'payroll.rejected',
+            "Payroll {$payroll->period_label} dikembalikan untuk diperbaiki",
+            'payroll', $payroll->id,
+            ['period' => $payroll->period, 'rejection_note' => $validated['rejection_note']]
+        );
+
+        app(NotificationService::class)->notifyRoles(
+            $payroll->company_id,
+            ['hr_manager'],
+            'payroll.rejected',
+            'Payroll perlu diperbaiki',
+            "Payroll {$payroll->period_label} dikembalikan oleh tim Finance.",
+            route('payroll.show', $payroll, false),
+            ['payroll_id' => $payroll->id, 'period' => $payroll->period],
+        );
 
         return back()->with('status', 'Payroll dikembalikan ke HR.');
     }
@@ -173,12 +279,49 @@ class PayrollController extends Controller
         $payroll->update(array_filter(['disbursement_proof' => $proof]));
         $payroll->payrollItems()->update(['status' => 'transferred', 'disbursed_at' => now()]);
 
+        ActivityLogger::record($request, 'payroll', 'payroll.disbursed',
+            "Payroll {$payroll->period_label} berhasil disalurkan",
+            'payroll', $payroll->id,
+            [
+                'period' => $payroll->period,
+                'employee_count' => $payroll->employee_count,
+                'net_total' => (float) $payroll->net_total,
+                'has_proof' => $proof !== null,
+            ]
+        );
+
+        $employeeIds = $payroll->payrollItems()->pluck('employee_id');
+        $employeeUsers = \App\Models\User::query()
+            ->where('company_id', $payroll->company_id)
+            ->where('status', 'active')
+            ->whereIn('employee_id', $employeeIds)
+            ->get(['id', 'company_id']);
+
+        app(NotificationService::class)->notifyUsers(
+            $employeeUsers,
+            'payroll.disbursed',
+            'Gaji telah dibayarkan',
+            "Slip gaji {$payroll->period_label} sudah tersedia.",
+            route('payroll.my-payslips', absolute: false),
+            ['payroll_id' => $payroll->id, 'period' => $payroll->period],
+        );
+
+        app(NotificationService::class)->notifyRoles(
+            $payroll->company_id,
+            ['hr_manager'],
+            'payroll.disbursed',
+            'Payroll berhasil disalurkan',
+            "{$payroll->employee_count} pembayaran {$payroll->period_label} berhasil diproses.",
+            route('payroll.show', $payroll, false),
+            ['payroll_id' => $payroll->id, 'period' => $payroll->period],
+        );
+
         return back()->with('status', 'Payroll berhasil disburse.');
     }
 
     public function reconcile(Request $request, Payroll $payroll): View
     {
-        $this->authorizePayroll($request, $payroll, ['super_admin', 'finance_manager']);
+        $this->authorizePayroll($request, $payroll, ['super_admin', 'finance_manager', 'hr_manager']);
         $transferredTotal = $payroll->payrollItems()->where('status', 'transferred')->sum('net_pay');
 
         return view('payflow.payroll.reconcile', compact('payroll', 'transferredTotal'));

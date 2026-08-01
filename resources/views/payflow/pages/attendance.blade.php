@@ -25,15 +25,23 @@
         <span class="badge badge-blue">{{ $attendancePayroll->period_label }}</span>
     @endif
     @if(!$isSuperAdmin && $attendancePayroll)
+        @if(auth()->user()->isHrManager())
+        @if(in_array($attendancePayroll->status, ['draft', 'needs_review']))
         <a href="{{ route('payroll.attendance.import', $attendancePayroll) }}"
            class="btn btn-secondary" style="margin-left:auto;">
             <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
             Import CSV Kehadiran
         </a>
+        @else
+        <span class="badge badge-amber" style="margin-left:auto;" title="Payroll periode ini sudah dikunci, tidak bisa import ulang">
+            🔒 Terkunci ({{ ucfirst(str_replace('_',' ',$attendancePayroll->status)) }})
+        </span>
+        @endif
         <a href="{{ route('payroll.attendance.template') }}" class="btn btn-secondary">
             <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Download Template
         </a>
+        @endif
     @endif
 </form>
 @endif
@@ -115,10 +123,14 @@
             <p class="muted" style="margin:0; font-size:13px;">Import CSV untuk periode {{ $attendancePayroll->period_label }}.</p>
             @if(!$isSuperAdmin)
             <div style="margin-top:16px;">
+                @if(in_array($attendancePayroll->status, ['draft', 'needs_review']))
                 <a href="{{ route('payroll.attendance.import', $attendancePayroll) }}" class="btn btn-primary">
                     <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                     Import CSV Kehadiran
                 </a>
+                @else
+                <span class="badge badge-amber">🔒 Payroll sudah {{ ucfirst(str_replace('_',' ',$attendancePayroll->status)) }} — data kehadiran tidak bisa diubah</span>
+                @endif
             </div>
             @endif
         </div>
@@ -172,7 +184,7 @@
         </div>
 
         {{-- Import guide --}}
-        @if(!$isSuperAdmin && in_array($attendancePayroll->status, ['draft', 'needs_review']))
+        @if(!$isSuperAdmin && auth()->user()->isHrManager() && in_array($attendancePayroll->status, ['draft', 'needs_review']))
         <div style="padding:14px 20px; border-top:1px solid var(--line); background:#f8fafc; border-radius:0 0 16px 16px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
             <div style="display:flex; gap:8px; align-items:center;">
                 <span class="badge badge-blue" style="font-size:11px;">Tips</span>

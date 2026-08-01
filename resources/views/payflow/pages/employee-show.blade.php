@@ -162,6 +162,74 @@
                 </div>
             </div>
         </div>
+
+        {{-- ── Akun ESS (Employee Self-Service) ── --}}
+        @if($canEdit ?? false)
+        @php $essUser = $employee->user; @endphp
+        <div class="section-card">
+            <div class="section-header" style="padding-bottom:12px;">
+                <div style="font-size:14px; font-weight:700; color:var(--navy); display:flex; align-items:center; gap:8px;">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+                    Akun Self-Service
+                </div>
+            </div>
+            <div class="section-content" style="padding-top:0;">
+                @if($essUser)
+                    {{-- Akun sudah ada --}}
+                    <div style="display:flex; flex-direction:column; gap:10px;">
+                        <div style="display:flex; justify-content:space-between; font-size:13px; align-items:center;">
+                            <span class="muted">Email</span>
+                            <span style="color:var(--navy); font-weight:600;">{{ $essUser->email }}</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; font-size:13px; align-items:center;">
+                            <span class="muted">Status</span>
+                            <span class="badge {{ $essUser->status === 'active' ? 'badge-green' : 'badge-amber' }}">
+                                {{ $essUser->status === 'active' ? 'Aktif' : 'Menunggu Aktivasi' }}
+                            </span>
+                        </div>
+                        @if($essUser->status === 'invited')
+                            <div style="padding-top:8px; border-top:1px solid var(--line);">
+                                <form method="POST" action="{{ route('team.resend', $essUser) }}">
+                                    @csrf
+                                    <button class="btn btn-secondary" type="submit" style="font-size:12px; width:100%;">
+                                        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                                        Kirim Ulang Undangan
+                                    </button>
+                                </form>
+                            </div>
+                        @endif
+                    </div>
+                @else
+                    {{-- Belum punya akun — tampilkan form undangan --}}
+                    <p class="muted" style="font-size:13px; margin:0 0 14px;">
+                        Karyawan ini belum memiliki akun. Kirim undangan agar mereka bisa mengakses slip gaji dan data kehadiran pribadi.
+                    </p>
+                    @if(session('status') && str_contains(session('status'), 'Undangan'))
+                        <div style="margin-bottom:12px; padding:10px 12px; border-radius:8px; background:#f0fdf4; border:1px solid #86efac; font-size:13px; color:#166534;">
+                            {{ session('status') }}
+                        </div>
+                    @endif
+                    @if(session('error'))
+                        <div style="margin-bottom:12px; padding:10px 12px; border-radius:8px; background:#fef2f2; border:1px solid #fecaca; font-size:13px; color:#991b1b;">
+                            {{ session('error') }}
+                        </div>
+                    @endif
+                    <form method="POST" action="{{ route('employees.invite', $employee) }}" style="display:flex; flex-direction:column; gap:10px;">
+                        @csrf
+                        <label class="field">
+                            <span style="font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.05em;">Alamat Email</span>
+                            <input class="input" type="email" name="email" placeholder="email@perusahaan.com" required>
+                            @error('email')<small class="auth-error">{{ $message }}</small>@enderror
+                        </label>
+                        <button class="btn btn-primary" type="submit" style="font-size:13px;">
+                            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                            Kirim Undangan
+                        </button>
+                    </form>
+                @endif
+            </div>
+        </div>
+        @endif
     </div>
 
 </div>

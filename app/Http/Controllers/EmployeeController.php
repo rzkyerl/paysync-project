@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Employee;
+use App\Services\ActivityLogger;
 use App\Services\EmployeeCsvImporter;
+use App\Services\NotificationService;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -38,12 +40,51 @@ class EmployeeController extends Controller
         $result = $importer->import($request->file('file'), (int) $request->user()->company_id);
 
         if (! $result->successful()) {
+            app(NotificationService::class)->notifyUser(
+                $request->user(),
+                'employee.import_failed',
+                'Import karyawan gagal',
+                count($result->errors).' masalah ditemukan pada file CSV.',
+                route('employees.import', absolute: false),
+                ['error_count' => count($result->errors)],
+            );
+
             return back()->withInput()->with('import_errors', $result->errors);
+        }
+
+        ActivityLogger::record($request, 'employee', 'employee.imported',
+            "Import {$result->imported} karyawan dari CSV",
+            null, null, ['count' => $result->imported]
+        );
+
+        app(NotificationService::class)->notifyUser(
+            $request->user(),
+            'employee.imported',
+            'Import karyawan berhasil',
+            "{$result->imported} karyawan berhasil diimport.",
+            route('employees.index', absolute: false),
+            ['count' => $result->imported],
+        );
+
+        $unverifiedCount = Employee::query()
+            ->where('company_id', $request->user()->company_id)
+            ->where('bank_account_status', 'unverified')
+            ->count();
+
+        if ($unverifiedCount > 0) {
+            app(NotificationService::class)->notifyUser(
+                $request->user(),
+                'employee.bank_unverified',
+                'Rekening perlu diverifikasi',
+                "{$unverifiedCount} rekening karyawan menunggu verifikasi.",
+                route('employees.index', absolute: false),
+                ['count' => $unverifiedCount],
+            );
         }
 
         session()->flash('toast', ['type' => 'success', 'message' => $result->imported.' karyawan berhasil diimport.']);
 
-        return redirect()->route('employees.index');
+        return redirect()->route('dashboard.hr');
     }
 
     public function downloadTemplate(Request $request)
@@ -52,8 +93,9 @@ class EmployeeController extends Controller
 
         return response()->streamDownload(function (): void {
             $handle = fopen('php://output', 'wb');
-            fputcsv($handle, ['nip', 'name', 'department', 'position', 'work_status', 'join_date', 'basic_salary', 'bank_name', 'bank_account_number']);
-            fputcsv($handle, ['EMP-0001', 'Nama Karyawan', 'People', 'HR Staff', 'active', now()->format('Y-m-d'), '5000000', 'BCA', '1234567890']);
+            // Pakai semicolon agar Excel Indonesia membaca tiap kolom di cell terpisah
+            fputcsv($handle, ['nip', 'name', 'department', 'position', 'work_status', 'join_date', 'basic_salary', 'bank_name', 'bank_account_number'], ';');
+            fputcsv($handle, ['EMP-0001', 'Nama Karyawan', 'People', 'HR Staff', 'active', now()->format('Y-m-d'), '5000000', 'BCA', '1234567890'], ';');
             fclose($handle);
         }, 'employee-import-template.csv', ['Content-Type' => 'text/csv']);
     }
@@ -162,7 +204,24 @@ class EmployeeController extends Controller
         ]);
 
         $validated['company_id'] = $request->user()->company_id;
-        Employee::create($validated);
+        $employee = Employee::create($validated);
+
+        ActivityLogger::record($request, 'employee', 'employee.created',
+            "Karyawan {$employee->name} ({$employee->nip}) ditambahkan",
+            'employee', $employee->id
+        );
+
+        if ($employee->bank_account_status === 'unverified') {
+            app(NotificationService::class)->notifyRoles(
+                $employee->company_id,
+                ['hr_manager'],
+                'employee.bank_unverified',
+                'Rekening perlu diverifikasi',
+                "Rekening {$employee->name} ({$employee->nip}) belum diverifikasi.",
+                route('employees.show', $employee, false),
+                ['employee_id' => $employee->id],
+            );
+        }
 
         session()->flash('toast', [
             'type' => 'success',
@@ -238,6 +297,23 @@ class EmployeeController extends Controller
 
         $employee->update($validated);
 
+        ActivityLogger::record($request, 'employee', 'employee.updated',
+            "Data karyawan {$employee->name} ({$employee->nip}) diperbarui",
+            'employee', $employee->id
+        );
+
+        if ($employee->bank_account_status === 'unverified') {
+            app(NotificationService::class)->notifyRoles(
+                $employee->company_id,
+                ['hr_manager'],
+                'employee.bank_unverified',
+                'Perubahan rekening perlu diverifikasi',
+                "Data rekening {$employee->name} ({$employee->nip}) perlu diverifikasi ulang.",
+                route('employees.show', $employee, false),
+                ['employee_id' => $employee->id],
+            );
+        }
+
         session()->flash('toast', [
             'type' => 'success',
             'message' => 'Data karyawan berhasil diperbarui.',
@@ -256,7 +332,14 @@ class EmployeeController extends Controller
         Gate::authorize('delete', $employee);
 
         try {
+            $name = $employee->name;
+            $nip  = $employee->nip;
             $employee->delete();
+
+            ActivityLogger::record($request, 'employee', 'employee.deleted',
+                "Karyawan {$name} ({$nip}) dihapus",
+                'employee', $employee->id
+            );
 
             session()->flash('toast', [
                 'type' => 'success',
@@ -277,6 +360,11 @@ class EmployeeController extends Controller
         Gate::authorize('update', $employee);
         $employee->update(['bank_account_status' => 'verified']);
 
+        ActivityLogger::record($request, 'employee', 'employee.bank_verified',
+            "Rekening {$employee->name} ({$employee->nip}) diverifikasi",
+            'employee', $employee->id
+        );
+
         session()->flash('toast', ['type' => 'success', 'message' => 'Rekening karyawan berhasil diverifikasi.']);
 
         return back();
@@ -286,6 +374,11 @@ class EmployeeController extends Controller
     {
         Gate::authorize('update', $employee);
         $employee->update(['bank_account_status' => 'rejected']);
+
+        ActivityLogger::record($request, 'employee', 'employee.bank_rejected',
+            "Rekening {$employee->name} ({$employee->nip}) ditolak",
+            'employee', $employee->id
+        );
 
         session()->flash('toast', ['type' => 'warning', 'message' => 'Rekening karyawan ditolak.']);
 

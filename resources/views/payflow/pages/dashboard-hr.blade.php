@@ -86,6 +86,48 @@
     @endforelse
 </div>
 
+{{-- ═══ Banner Import Kehadiran ═══ --}}
+@if(!($isSuperAdminViewing ?? false) && ($importablePayroll ?? null))
+@php
+    $importedRecords = \App\Models\AttendanceRecord::where('payroll_id', $importablePayroll->id)->count();
+    $isFirstImport   = $importedRecords === 0;
+@endphp
+<div style="margin-top:16px; padding:16px 20px; border-radius:14px; border:1.5px solid {{ $isFirstImport ? '#fde68a' : '#bfdbfe' }}; background:{{ $isFirstImport ? '#fffbeb' : '#eff6ff' }}; display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+    <div style="width:40px; height:40px; border-radius:10px; background:{{ $isFirstImport ? '#fef3c7' : '#dbeafe' }}; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+        <svg width="20" height="20" fill="none" stroke="{{ $isFirstImport ? '#d97706' : '#2563eb' }}" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    </div>
+    <div style="flex:1; min-width:180px;">
+        <div style="font-weight:700; font-size:14px; color:var(--navy);">
+            @if($isFirstImport)
+                Data kehadiran belum diimport — Periode {{ $importablePayroll->period_label }}
+            @else
+                {{ $importedRecords }} record kehadiran sudah diimport — Periode {{ $importablePayroll->period_label }}
+            @endif
+        </div>
+        <div class="muted" style="font-size:12px; margin-top:2px;">
+            @if($isFirstImport)
+                Import CSV kehadiran untuk melanjutkan proses kalkulasi payroll.
+            @else
+                Upload ulang CSV jika ada perubahan data sebelum payroll dikalkulasi.
+            @endif
+        </div>
+    </div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <a href="{{ route('payroll.attendance.import', $importablePayroll) }}" class="btn btn-primary" style="font-size:13px;">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            {{ $isFirstImport ? 'Import CSV Kehadiran' : 'Re-import CSV' }}
+        </a>
+        <a href="{{ route('payroll.attendance.template') }}" class="btn btn-secondary" style="font-size:13px;">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download Template
+        </a>
+        <a href="{{ route('app', 'attendance') }}" class="btn btn-secondary" style="font-size:13px;">
+            Lihat Semua →
+        </a>
+    </div>
+</div>
+@endif
+
 {{-- ═══ Row 2: Payroll Timeline + Action Center ═══ --}}
 <div class="grid grid-2" style="margin-top:18px;">
 
@@ -137,12 +179,15 @@
                 @endphp
                 <div class="action-item" style="{{ $bgStyle }}">
                     <span class="action-dot" style="{{ $dotColor }}"></span>
-                    <div>
+                    <div style="flex:1;">
                         <div style="font-weight:600; font-size:13px;">{{ $item['text'] }}</div>
                         @if($item['level'] === 'danger')
                             <div class="muted" style="font-size:12px; margin-top:2px;">Segera tindak lanjuti sebelum payroll dikirim.</div>
                         @endif
                     </div>
+                    @if(!empty($item['link']))
+                        <a href="{{ $item['link'] }}" class="btn btn-secondary" style="font-size:11px; padding:4px 10px; flex-shrink:0;">Tindak Lanjut →</a>
+                    @endif
                 </div>
             @empty
                 <div style="text-align:center; padding:24px 0;">
@@ -154,6 +199,12 @@
                 <div class="quick-actions">
                     <a href="{{ route('employees.index') }}" class="quick-action-btn primary">Cek Rekening</a>
                     <a href="{{ route('payroll.index') }}" class="quick-action-btn">Review Payroll</a>
+                    <a href="{{ route('app', 'attendance') }}" class="quick-action-btn">Kehadiran</a>
+                </div>
+            @else
+                <div class="quick-actions" style="margin-top:8px;">
+                    <a href="{{ route('app', 'attendance') }}" class="quick-action-btn">Lihat Kehadiran</a>
+                    <a href="{{ route('payroll.index') }}" class="quick-action-btn">Payroll</a>
                 </div>
             @endif
         </div>
@@ -185,11 +236,11 @@
         </div>
     </div>
 
-    {{-- Recent Employee Changes --}}
+    {{-- Employee data --}}
     <div class="section-card">
         <div class="section-header">
             <h2>Karyawan Terbaru</h2>
-            <a class="btn btn-secondary" href="{{ route('employees.index') }}" style="padding:6px 12px; font-size:12px;">Lihat Semua →</a>
+            <a class="btn btn-secondary" href="{{ route('employees.index') }}" style="padding:6px 12px; font-size:12px;">Kelola Karyawan →</a>
         </div>
         <div style="overflow-x:auto;">
             <table style="min-width:0;">
@@ -207,7 +258,7 @@
                             $workBadge = match ($employee->work_status) { 'active' => 'badge-green', 'probation' => 'badge-amber', 'contract' => 'badge-blue', 'inactive' => 'badge-red', default => '' };
                             $workLabel = match ($employee->work_status) { 'active' => 'Aktif', 'probation' => 'Probation', 'contract' => 'Kontrak', 'inactive' => 'Nonaktif', default => $employee->work_status };
                             $bankBadge = match ($employee->bank_account_status) { 'verified' => 'badge-green', 'unverified' => 'badge-amber', 'rejected' => 'badge-red', default => '' };
-                            $bankLabel = match ($employee->bank_account_status) { 'verified' => 'Verified', 'unverified' => 'Pending', 'rejected' => 'Ditolak', default => $employee->bank_account_status };
+                            $bankLabel = match ($employee->bank_account_status) { 'verified' => 'Verified', 'unverified' => 'Pending', 'rejected' => 'Ditolak', default => ($employee->bank_account_status ?? '—') };
                         @endphp
                         <tr>
                             <td>
@@ -226,12 +277,13 @@
                 </tbody>
             </table>
         </div>
-        <div style="padding:12px 16px; border-top:1px solid var(--line); display:flex; gap:8px;">
+        <div style="padding:12px 16px; border-top:1px solid var(--line); display:flex; gap:8px; align-items:center;">
             <a href="{{ route('employees.create') }}" class="quick-action-btn primary" style="font-size:12px;">
                 <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 Tambah Karyawan
             </a>
-            <a href="{{ url('/app/attendance') }}" class="quick-action-btn" style="font-size:12px;">Import Kehadiran</a>
+            <a href="{{ route('employees.import') }}" class="quick-action-btn" style="font-size:12px;">Import CSV</a>
+            <a href="{{ route('employees.index') }}" class="muted" style="margin-left:auto; font-size:12px; text-decoration:none;">Lihat semua →</a>
         </div>
     </div>
 

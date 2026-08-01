@@ -66,4 +66,9 @@ class Company extends Model
     {
         return $this->hasMany(SettingsAuditLog::class);
     }
+
+    public function activityLogs(): HasMany
+    {
+        return $this->hasMany(ActivityLog::class);
+    }
 }

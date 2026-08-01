@@ -63,6 +63,10 @@ After running `php artisan db:seed`, the following accounts are available with t
 
 > These accounts are intended for local development only. Never use the default credentials in production.
 
+Complete onboarding with `ceo@paysync.test` after seeding. The seeded HR,
+Finance, and Employee accounts will automatically join the same workspace and
+appear under **Manajemen Tim**.
+
 ## Email configuration
 
 By default, outgoing emails are written to the application log. To send team invitations through an email provider, configure the `MAIL_*` variables and provider credentials in `.env`.

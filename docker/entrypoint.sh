@@ -9,20 +9,35 @@ if [ -z "$APP_KEY" ]; then
     php artisan key:generate --force
 fi
 
+# Railway MySQL plugin injects MYSQLHOST, MYSQLPORT, etc.
+# Map them to Laravel's DB_* variables if not already set
+DB_HOST="${DB_HOST:-${MYSQLHOST:-}}"
+DB_PORT="${DB_PORT:-${MYSQLPORT:-3306}}"
+DB_DATABASE="${DB_DATABASE:-${MYSQLDATABASE:-}}"
+DB_USERNAME="${DB_USERNAME:-${MYSQLUSER:-}}"
+DB_PASSWORD="${DB_PASSWORD:-${MYSQLPASSWORD:-}}"
+
+export DB_HOST DB_PORT DB_DATABASE DB_USERNAME DB_PASSWORD
+
 # Write environment variables to .env
-# Render injects env vars directly, so we sync them to .env file
+# Railway injects env vars directly, so we sync them to .env file
 php -r "
 \$env = file_get_contents('.env');
 \$vars = [
-    'APP_KEY', 'APP_URL', 'APP_DEBUG',
+    'APP_KEY', 'APP_URL', 'APP_ENV', 'APP_DEBUG',
     'DB_HOST', 'DB_PORT', 'DB_DATABASE', 'DB_USERNAME', 'DB_PASSWORD',
-    'MAIL_PASSWORD',
+    'MAIL_MAILER', 'MAIL_HOST', 'MAIL_PORT', 'MAIL_USERNAME', 'MAIL_PASSWORD',
+    'MAIL_FROM_ADDRESS', 'MAIL_FROM_NAME',
     'SESSION_DRIVER', 'CACHE_STORE', 'QUEUE_CONNECTION',
 ];
 foreach (\$vars as \$key) {
     \$value = getenv(\$key);
-    if (\$value !== false) {
-        \$env = preg_replace('/^'.\$key.'=.*/m', \$key.'='.\$value, \$env);
+    if (\$value !== false && \$value !== '') {
+        if (preg_match('/^'.\$key.'=/m', \$env)) {
+            \$env = preg_replace('/^'.\$key.'=.*/m', \$key.'='.\$value, \$env);
+        } else {
+            \$env .= PHP_EOL.\$key.'='.\$value;
+        }
     }
 }
 file_put_contents('.env', \$env);

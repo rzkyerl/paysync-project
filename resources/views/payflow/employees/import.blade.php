@@ -14,13 +14,25 @@
         <section class="card" style="margin-bottom:16px;"><strong>Import gagal. Tidak ada data yang disimpan.</strong><div class="table-wrap" style="margin-top:12px;"><table><thead><tr><th>Baris</th><th>Field</th><th>Pesan</th></tr></thead><tbody>@foreach(session('import_errors') as $error)<tr><td>{{ $error['row'] }}</td><td>{{ $error['field'] }}</td><td>{{ $error['message'] }}</td></tr>@endforeach</tbody></table></div></section>
     @endif
     <section class="card">
-        <form method="POST" action="{{ route('employees.import.store') }}" enctype="multipart/form-data" class="form-stack">
+        <form method="POST" action="{{ route('employees.import.store') }}" enctype="multipart/form-data" class="form-stack"
+              x-data="{ hasFile: false, loading: false }" @submit="loading = true">
             @csrf
-            <label class="field"><span>File CSV (maksimal 2 MB)</span><input class="input" type="file" name="file" accept=".csv,text/csv" required></label>
-            <div style="display:flex; gap:10px; align-items:center;"><button class="btn btn-primary" type="submit">Import CSV</button><a class="btn btn-secondary" href="{{ route('employees.import.template') }}">Download Template</a></div>
+            <label class="field">
+                <span>File CSV (maksimal 2 MB)</span>
+                <input class="input" type="file" name="file" accept=".csv,text/csv" required
+                       @change="hasFile = $event.target.files.length > 0">
+            </label>
+            <div style="display:flex; gap:10px; align-items:center;">
+                <button class="btn btn-primary" type="submit"
+                        :disabled="loading || !hasFile"
+                        x-text="loading ? 'Menyimpan...' : (hasFile ? 'Simpan' : 'Import CSV')">
+                </button>
+                <a class="btn btn-secondary" href="{{ route('employees.import.template') }}">Download Template</a>
+            </div>
         </form>
         <p class="muted" style="margin-top:16px;">Header wajib: nip, name, department, position, work_status, join_date, basic_salary, bank_name, bank_account_number.</p>
     </section>
 </main>
+<script defer src="{{ asset('vendor/alpinejs/cdn.min.js') }}"></script>
 </body>
 </html>

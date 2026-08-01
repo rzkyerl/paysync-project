@@ -152,15 +152,15 @@
                 <div style="border:1px solid var(--line); border-radius:12px; overflow:hidden; margin-bottom:16px;">
                     <div class="detail-row" style="padding:10px 14px;">
                         <span class="detail-label">Gross Pay</span>
-                        <span class="detail-value">Rp {{ number_format((float)($lastPayslip->gross_total ?? 0), 0, ',', '.') }}</span>
+                        <span class="detail-value">Rp {{ number_format((float)($lastPayslipItem->gross_pay ?? 0), 0, ',', '.') }}</span>
                     </div>
                     <div class="detail-row" style="padding:10px 14px;">
                         <span class="detail-label">Potongan</span>
-                        <span class="detail-value" style="color:var(--red);">- Rp {{ number_format(max(0, (float)($lastPayslip->gross_total ?? 0) - (float)($lastPayslip->net_total ?? 0)), 0, ',', '.') }}</span>
+                        <span class="detail-value" style="color:var(--red);">- Rp {{ number_format((float)($lastPayslipItem->total_deduction ?? 0), 0, ',', '.') }}</span>
                     </div>
                     <div class="detail-row" style="padding:10px 14px; background:var(--brand-soft);">
                         <span class="detail-label" style="font-weight:700; color:var(--navy);">Net Pay</span>
-                        <span class="detail-value" style="font-size:16px; color:var(--brand);">Rp {{ number_format((float)$lastPayslip->net_total, 0, ',', '.') }}</span>
+                        <span class="detail-value" style="font-size:16px; color:var(--brand);">Rp {{ number_format((float)($lastPayslipItem->net_pay ?? 0), 0, ',', '.') }}</span>
                     </div>
                 </div>
 

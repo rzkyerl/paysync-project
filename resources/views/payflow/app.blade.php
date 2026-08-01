@@ -130,10 +130,167 @@
                     </div>
                 </div>
                 <div class="topbar-right" x-data>
-                    <label class="topbar-search">
-                        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#94a3b8;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                        <input class="input topbar-search-input" placeholder="Cari modul, karyawan...">
-                    </label>
+                    {{-- Global Search --}}
+                    <div
+                        class="topbar-search-wrap"
+                        x-data="{
+                            query: '',
+                            open: false,
+                            loading: false,
+                            modules: [],
+                            employees: [],
+                            activeIdx: -1,
+                            get total() { return this.modules.length + this.employees.length; },
+                            get hasResults() { return this.modules.length > 0 || this.employees.length > 0; },
+                            get allItems() {
+                                return [
+                                    ...this.modules.map(m => ({ type: 'module', ...m })),
+                                    ...this.employees.map(e => ({ type: 'employee', ...e }))
+                                ];
+                            },
+                            debounceTimer: null,
+                            onInput() {
+                                this.activeIdx = -1;
+                                clearTimeout(this.debounceTimer);
+                                if (this.query.trim().length < 2) {
+                                    this.open = false;
+                                    this.modules = [];
+                                    this.employees = [];
+                                    return;
+                                }
+                                this.loading = true;
+                                this.open = true;
+                                this.debounceTimer = setTimeout(() => this.doSearch(), 300);
+                            },
+                            async doSearch() {
+                                try {
+                                    const res = await fetch('/app/search?q=' + encodeURIComponent(this.query), {
+                                        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                                    });
+                                    const data = await res.json();
+                                    this.modules   = data.modules   ?? [];
+                                    this.employees = data.employees ?? [];
+                                    this.open = true;
+                                } catch(e) {
+                                    this.modules = [];
+                                    this.employees = [];
+                                } finally {
+                                    this.loading = false;
+                                }
+                            },
+                            navigate(url) {
+                                this.open = false;
+                                this.query = '';
+                                window.location.href = url;
+                            },
+                            onKeydown(e) {
+                                if (!this.open) return;
+                                const items = this.allItems;
+                                if (e.key === 'ArrowDown') {
+                                    e.preventDefault();
+                                    this.activeIdx = (this.activeIdx + 1) % items.length;
+                                } else if (e.key === 'ArrowUp') {
+                                    e.preventDefault();
+                                    this.activeIdx = (this.activeIdx - 1 + items.length) % items.length;
+                                } else if (e.key === 'Enter' && this.activeIdx >= 0) {
+                                    e.preventDefault();
+                                    this.navigate(items[this.activeIdx].url);
+                                } else if (e.key === 'Escape') {
+                                    this.open = false;
+                                    this.activeIdx = -1;
+                                }
+                            }
+                        }"
+                        @click.outside="open = false"
+                        @keydown="onKeydown($event)"
+                    >
+                        <label class="topbar-search">
+                            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#94a3b8;pointer-events:none;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                            <input
+                                class="input topbar-search-input"
+                                type="search"
+                                placeholder="Cari modul, karyawan..."
+                                autocomplete="off"
+                                x-model="query"
+                                @input="onInput()"
+                                @focus="query.trim().length >= 2 && (open = true)"
+                                aria-label="Cari modul atau karyawan"
+                                aria-autocomplete="list"
+                                aria-haspopup="listbox"
+                                :aria-expanded="open"
+                            >
+                            {{-- Spinner --}}
+                            <svg x-show="loading" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);color:#94a3b8;animation:spin .7s linear infinite;" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                        </label>
+
+                        {{-- Dropdown results --}}
+                        <div
+                            x-show="open && query.trim().length >= 2"
+                            x-cloak
+                            x-transition:enter="topbar-search-enter"
+                            x-transition:leave="topbar-search-leave"
+                            class="topbar-search-dropdown"
+                            role="listbox"
+                            aria-label="Hasil pencarian"
+                        >
+                            {{-- No results --}}
+                            <template x-if="!loading && !hasResults">
+                                <div class="topbar-search-empty">
+                                    Tidak ada hasil untuk "<span x-text="query"></span>"
+                                </div>
+                            </template>
+
+                            {{-- Modules --}}
+                            <template x-if="modules.length > 0">
+                                <div>
+                                    <div class="topbar-search-group">Modul</div>
+                                    <template x-for="(item, i) in modules" :key="'m'+i">
+                                        <a
+                                            :href="item.url"
+                                            class="topbar-search-item"
+                                            :class="{ 'topbar-search-item--active': activeIdx === i }"
+                                            role="option"
+                                            @mouseenter="activeIdx = i"
+                                            @click.prevent="navigate(item.url)"
+                                        >
+                                            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;color:var(--brand);" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                                            <span x-text="item.label"></span>
+                                        </a>
+                                    </template>
+                                </div>
+                            </template>
+
+                            {{-- Employees --}}
+                            <template x-if="employees.length > 0">
+                                <div>
+                                    <div class="topbar-search-group" :class="{ 'topbar-search-group--border': modules.length > 0 }">Karyawan</div>
+                                    <template x-for="(item, j) in employees" :key="'e'+j">
+                                        <a
+                                            :href="item.url"
+                                            class="topbar-search-item"
+                                            :class="{ 'topbar-search-item--active': activeIdx === (modules.length + j) }"
+                                            role="option"
+                                            @mouseenter="activeIdx = modules.length + j"
+                                            @click.prevent="navigate(item.url)"
+                                        >
+                                            <span class="topbar-search-avatar" x-text="item.name.substring(0,2).toUpperCase()"></span>
+                                            <span>
+                                                <span class="topbar-search-name" x-text="item.name"></span>
+                                                <span class="topbar-search-sub" x-text="item.nip + (item.department ? ' · ' + item.department : '')"></span>
+                                            </span>
+                                        </a>
+                                    </template>
+                                </div>
+                            </template>
+
+                            {{-- Footer hint --}}
+                            <template x-if="hasResults">
+                                <div class="topbar-search-hint">
+                                    <kbd>↑↓</kbd> navigasi &nbsp;·&nbsp; <kbd>Enter</kbd> buka &nbsp;·&nbsp; <kbd>Esc</kbd> tutup
+                                </div>
+                            </template>
+                        </div>
+                    </div>
 
                     {{-- Notification Bell --}}
                     <div class="topbar-icon-btn" x-data="{ open: false }" @click.outside="open = false">
