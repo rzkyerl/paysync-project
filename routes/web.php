@@ -2,7 +2,9 @@
 
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\GlobalSearchController;
 use App\Http\Controllers\LoginController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\RegisterController;
@@ -28,6 +30,12 @@ Route::post('/invite/{token}', [TeamController::class, 'activate'])->name('invit
 
 // All app routes require authentication
 Route::middleware('auth')->group(function () {
+    Route::patch('/notifications/{notification}', [NotificationController::class, 'read'])->name('notifications.read');
+    Route::post('/notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read-all');
+
+    // Global search (topbar)
+    Route::get('/app/search', [GlobalSearchController::class, 'search'])->name('app.search');
+
     Route::get('/onboarding', [OnboardingController::class, 'show'])->name('onboarding');
     Route::post('/onboarding', [OnboardingController::class, 'store'])->name('onboarding.store');
 
@@ -74,12 +82,17 @@ Route::middleware('auth')->group(function () {
         Route::delete('/users/{user}', [SettingsController::class, 'deactivateUser'])->name('users.deactivate');
     });
 
-    Route::middleware('role:super_admin')->group(function () {
+    Route::middleware('role:super_admin,hr_manager')->group(function () {
         Route::get('/app/team', [TeamController::class, 'index'])->name('team.index');
         Route::post('/app/team/invite', [TeamController::class, 'invite'])->name('team.invite');
         Route::post('/app/team/{user}/resend', [TeamController::class, 'resend'])->name('team.resend');
         Route::delete('/app/team/{user}', [TeamController::class, 'remove'])->name('team.remove');
     });
+
+    // Undang karyawan sebagai ESS user — dari halaman detail karyawan
+    Route::post('/employees/{employee}/invite', [TeamController::class, 'inviteEmployee'])
+        ->middleware('role:hr_manager')
+        ->name('employees.invite');
 
     // Catch-all for remaining app pages (attendance, approval, payslips, disbursement,
     // reconciliation, reports, settings, audit) — placed last so specific routes above take precedence

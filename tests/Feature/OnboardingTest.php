@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Company;
 use App\Models\User;
+use Database\Seeders\UserSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -67,6 +68,37 @@ class OnboardingTest extends TestCase
         $company = Company::first();
         $this->assertNotNull($company);
         $this->assertSame($company->id, $user->company_id);
+    }
+
+    public function test_seeded_accounts_join_the_owner_workspace_after_onboarding(): void
+    {
+        $this->seed(UserSeeder::class);
+
+        $owner = User::where('email', 'ceo@paysync.test')->firstOrFail();
+
+        $this->actingAs($owner)->post(route('onboarding.store'), [
+            'name' => 'PT Seeded Team',
+            'industry' => 'Teknologi',
+            'size' => '> 500',
+            'payroll_cut_off' => 25,
+            'pay_date' => 30,
+        ])->assertRedirect('/app/dashboard-hr');
+
+        $owner->refresh();
+
+        $this->assertDatabaseCount('companies', 1);
+        $this->assertSame(4, User::where('company_id', $owner->company_id)->count());
+
+        foreach (config('paysync.seeded_team.members') as $email) {
+            $this->assertDatabaseHas('users', [
+                'email' => $email,
+                'company_id' => $owner->company_id,
+            ]);
+        }
+
+        $this->get(route('team.index'))
+            ->assertOk()
+            ->assertViewHas('members', fn ($members) => $members->count() === 3);
     }
 
     /**

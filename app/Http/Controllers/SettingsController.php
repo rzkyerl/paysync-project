@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Company;
 use App\Models\SettingsAuditLog;
 use App\Models\User;
+use App\Services\ActivityLogger;
+use App\Services\NotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -55,6 +57,12 @@ class SettingsController extends Controller
             $company->update($validated);
         });
 
+        ActivityLogger::record($request, 'settings', 'settings.company_updated',
+            'Profil perusahaan diperbarui',
+            'company', $company->id,
+            ['fields' => array_keys($validated)]
+        );
+
         return back()->with('status', 'Profil perusahaan berhasil diperbarui.');
     }
 
@@ -62,7 +70,25 @@ class SettingsController extends Controller
     {
         $this->assertTarget($request, $user);
         $validated = $request->validate(['role' => ['required', 'in:hr_manager,finance_manager,employee']]);
+        $oldRole = $user->role;
         $user->update(['role' => $validated['role']]);
+
+        if ($oldRole !== $user->role) {
+            ActivityLogger::record($request, 'team', 'team.role_changed',
+                "Role {$user->name} diubah dari {$oldRole} menjadi {$user->role}",
+                'user', $user->id,
+                ['name' => $user->name, 'email' => $user->email, 'old_role' => $oldRole, 'new_role' => $user->role]
+            );
+
+            app(NotificationService::class)->notifyUser(
+                $user,
+                'team.role_changed',
+                'Role Anda diperbarui',
+                "Role Anda berubah dari {$oldRole} menjadi {$user->role}.",
+                '/app/'.$user->defaultDashboard(),
+                ['old_role' => $oldRole, 'new_role' => $user->role],
+            );
+        }
 
         return back()->with('status', 'Role anggota berhasil diperbarui.');
     }
@@ -70,7 +96,14 @@ class SettingsController extends Controller
     public function deactivateUser(Request $request, User $user): RedirectResponse
     {
         $this->assertTarget($request, $user);
+        $memberId = $user->id;
+        $metadata = ['name' => $user->name, 'email' => $user->email, 'role' => $user->role];
         $user->delete();
+
+        ActivityLogger::record($request, 'team', 'team.deactivated',
+            "Anggota tim {$metadata['name']} dinonaktifkan",
+            'user', $memberId, $metadata
+        );
 
         return back()->with('status', 'Anggota berhasil dinonaktifkan.');
     }

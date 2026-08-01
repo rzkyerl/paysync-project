@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\Employee;
 use App\Policies\EmployeePolicy;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -24,5 +25,17 @@ class AppServiceProvider extends ServiceProvider
     {
         // Register policies (Laravel 11 style — no AuthServiceProvider needed)
         Gate::policy(Employee::class, EmployeePolicy::class);
+
+        View::composer('payflow.app', function ($view): void {
+            $user = auth()->user();
+            $notifications = $user
+                ? $user->userNotifications()->latest()->limit(8)->get()
+                : collect();
+
+            $view->with([
+                'headerNotifications' => $notifications,
+                'unreadNotificationCount' => $user ? $user->unreadNotifications()->count() : 0,
+            ]);
+        });
     }
 }

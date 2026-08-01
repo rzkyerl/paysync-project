@@ -209,12 +209,29 @@ class DashboardController extends Controller
             ]);
         }
 
-        // Inject audit-specific data
+        // Inject company-scoped activity log data.
         if ($page === 'audit' && $user->company_id) {
-            $auditLogs = \App\Models\SettingsAuditLog::where('company_id', $user->company_id)
+            $activityTimezone = config('paysync.activity_timezone', 'Asia/Jakarta');
+            $from = request('from')
+                ? \Illuminate\Support\Carbon::parse(request('from'), $activityTimezone)->startOfDay()->utc()
+                : null;
+            $to = request('to')
+                ? \Illuminate\Support\Carbon::parse(request('to'), $activityTimezone)->endOfDay()->utc()
+                : null;
+
+            $auditLogs = \App\Models\ActivityLog::query()
+                ->where('company_id', $user->company_id)
                 ->with('user')
-                ->orderByDesc('changed_at')
-                ->paginate(30);
+                ->when(request('category'), fn ($query, $category) => $query->where('category', $category))
+                ->when(request('event'), fn ($query, $event) => $query->where('event', 'like', '%'.$event.'%'))
+                ->when(request('actor'), function ($query, $actor): void {
+                    $query->whereHas('user', fn ($userQuery) => $userQuery->where('name', 'like', '%'.$actor.'%'));
+                })
+                ->when($from, fn ($query, $from) => $query->where('occurred_at', '>=', $from))
+                ->when($to, fn ($query, $to) => $query->where('occurred_at', '<=', $to))
+                ->orderByDesc('occurred_at')
+                ->paginate(30)
+                ->withQueryString();
 
             $workspaceData = array_merge($workspaceData, [
                 'auditLogs' => $auditLogs,
@@ -227,10 +244,15 @@ class DashboardController extends Controller
                 ->orderByDesc('period')
                 ->get(['id', 'period', 'period_label', 'status']);
 
-            $selectedPayrollId  = request('payroll_id');
-            $attendancePayroll  = $selectedPayrollId
-                ? $attendancePayrolls->firstWhere('id', $selectedPayrollId)
-                : $attendancePayrolls->first();
+            $selectedPayrollId = request('payroll_id');
+            if ($selectedPayrollId) {
+                $attendancePayroll = $attendancePayrolls->firstWhere('id', $selectedPayrollId);
+            } else {
+                // Default ke payroll yang masih bisa di-edit (draft/needs_review),
+                // fallback ke yang terbaru jika semua sudah terkunci
+                $attendancePayroll = $attendancePayrolls->first(fn ($p) => in_array($p->status, ['draft', 'needs_review']))
+                    ?? $attendancePayrolls->first();
+            }
 
             $attendanceRecords  = $attendancePayroll
                 ? \App\Models\AttendanceRecord::where('payroll_id', $attendancePayroll->id)
@@ -521,8 +543,24 @@ class DashboardController extends Controller
             // Payroll pending approval — scoped to company
             $pendingApprovalCount = $payrollQuery()->where('status', 'pending_approval')->count();
 
-            // Kehadiran belum lengkap — no attendance table exists, show 0
-            $incompleteAttendanceCount = 0;
+            // Payroll yang bisa di-import kehadiran (draft/needs_review)
+            $importablePayroll = $payrollQuery()
+                ->whereIn('status', ['draft', 'needs_review'])
+                ->latest('updated_at')
+                ->first();
+
+            // Cek apakah payroll aktif belum punya data kehadiran sama sekali
+            $missingAttendanceCount = 0;
+            if ($importablePayroll) {
+                $importedCount = \App\Models\AttendanceRecord::where('payroll_id', $importablePayroll->id)->count();
+                if ($importedCount === 0) {
+                    $missingAttendanceCount = $employeeQuery()
+                        ->whereIn('work_status', ['active', 'probation', 'contract'])
+                        ->count();
+                }
+            }
+
+            $incompleteAttendanceCount = $missingAttendanceCount;
 
             $actionItems = [];
 
@@ -542,8 +580,9 @@ class DashboardController extends Controller
 
             if ($incompleteAttendanceCount > 0) {
                 $actionItems[] = [
-                    'text' => "Data kehadiran belum lengkap: {$incompleteAttendanceCount} baris",
+                    'text'  => "Data kehadiran belum diimport: periode {$importablePayroll?->period_label}",
                     'level' => 'warning',
+                    'link'  => $importablePayroll ? route('payroll.attendance.import', $importablePayroll) : null,
                 ];
             }
 
@@ -564,11 +603,9 @@ class DashboardController extends Controller
             $actionItemCount = count($actionItems);
 
             // ----------------------------------------------------------------
-            // 3.4 Recent Employee Changes — 5 most recently modified, scoped to company
+            // 3.4 Recent employees (5 latest), most recently modified first
             // ----------------------------------------------------------------
-            $recentEmployees = $employeeQuery()->orderByDesc('updated_at')
-                ->limit(5)
-                ->get();
+            $recentEmployees = $employeeQuery()->orderByDesc('updated_at')->limit(5)->get();
 
         } catch (\Throwable $e) {
             Log::error('DashboardController::hr() error: '.$e->getMessage(), [
@@ -582,6 +619,7 @@ class DashboardController extends Controller
             $actionItems = [];
             $actionItemCount = 0;
             $recentEmployees = collect();
+            $importablePayroll = null;
         }
 
         $data = [
@@ -592,6 +630,7 @@ class DashboardController extends Controller
             'actionItems' => $actionItems,
             'actionItemCount' => $actionItemCount,
             'recentEmployees' => $recentEmployees,
+            'importablePayroll' => $importablePayroll ?? null,
             'error' => $error,
         ];
 
@@ -793,6 +832,7 @@ class DashboardController extends Controller
             // 5.3 Bank Account Status — load the Employee linked to this user
             // ----------------------------------------------------------------
             $employeeId = $request->user()->employee_id;
+            $companyId  = $request->user()->company_id;
 
             if ($employeeId) {
                 $employee = Employee::find($employeeId);
@@ -804,83 +844,103 @@ class DashboardController extends Controller
             }
 
             // ----------------------------------------------------------------
-            // 5.2 Last Payslip — most recent disbursed or approved payroll
+            // 5.2 Last Payslip — milik karyawan ini, bukan aggregate company
+            // PayrollItem scoped ke employee_id + company_id
             // ----------------------------------------------------------------
-            $lastPayslip = Payroll::whereIn('status', ['disbursed', 'approved'])
-                ->latest('updated_at')
-                ->first();
+            $lastPayslipItem = null;
+            $lastPayslip     = null;
+
+            if ($employeeId && $companyId) {
+                $lastPayslipItem = \App\Models\PayrollItem::query()
+                    ->where('employee_id', $employeeId)
+                    ->where('company_id', $companyId)
+                    ->whereHas('payroll', fn ($q) => $q->whereIn('status', ['disbursed', 'approved']))
+                    ->with('payroll')
+                    ->orderByDesc('created_at')
+                    ->first();
+
+                $lastPayslip = $lastPayslipItem?->payroll;
+            }
 
             // ----------------------------------------------------------------
             // 5.1 KPI Calculations
             // ----------------------------------------------------------------
 
             // --- Next Payday ---
-            // Find the latest payroll that has been disbursed or approved.
-            // The "next payday" = last day of that payroll period's month.
-            $referencePayroll = $lastPayslip;
-
-            $nextPaydayDate = null;
-            $nextPaydayDays = null;
+            $nextPaydayDate  = null;
+            $nextPaydayDays  = null;
             $nextPaydayLabel = '-';
 
-            if ($referencePayroll) {
-                // period format: "YYYY-MM"
+            if ($lastPayslip) {
                 try {
-                    $periodDate = Carbon::createFromFormat('Y-m', $referencePayroll->period);
+                    $periodDate    = Carbon::createFromFormat('Y-m', $lastPayslip->period);
                     $nextPaydayDate = $periodDate->copy()->endOfMonth()->startOfDay();
-                    $now = Carbon::now()->startOfDay();
-
-                    // Positive = payday is in the future, negative = already passed
-                    $diffDays = (int) $now->diffInDays($nextPaydayDate, false);
-
+                    $now           = Carbon::now()->startOfDay();
+                    $diffDays      = (int) $now->diffInDays($nextPaydayDate, false);
                     $nextPaydayLabel = $nextPaydayDate->translatedFormat('d M Y');
-                    $nextPaydayDays = $diffDays;
+                    $nextPaydayDays  = $diffDays;
                 } catch (\Exception $e) {
                     // Leave as null if period is malformed
                 }
             }
 
-            // --- Kehadiran Bulan Ini (Attendance this month) ---
-            // No attendance table exists. Estimate using weekdays elapsed in the current month.
-            $today = Carbon::now();
-            $startOfMonth = $today->copy()->startOfMonth();
-            $totalWeekdays = 0;
-            $elapsedWeekdays = 0;
+            // --- Kehadiran Bulan Ini — ambil dari AttendanceRecord karyawan ---
+            $today         = Carbon::now();
+            $currentPeriod = $today->format('Y-m');
 
-            $cursor = $startOfMonth->copy();
-            $endOfMonth = $today->copy()->endOfMonth();
+            // Coba ambil dari AttendanceRecord periode ini
+            $attendanceRecord = null;
+            if ($employeeId && $companyId) {
+                $currentPayroll = \App\Models\Payroll::where('company_id', $companyId)
+                    ->where('period', $currentPeriod)
+                    ->first();
 
-            while ($cursor->lte($endOfMonth)) {
-                if (! $cursor->isWeekend()) {
-                    $totalWeekdays++;
-                    if ($cursor->lte($today)) {
-                        $elapsedWeekdays++;
-                    }
+                if ($currentPayroll) {
+                    $attendanceRecord = \App\Models\AttendanceRecord::where('payroll_id', $currentPayroll->id)
+                        ->where('employee_id', $employeeId)
+                        ->first();
                 }
-                $cursor->addDay();
             }
 
-            $attendanceThisMonth = $elapsedWeekdays;
-            $attendanceTotalDays = $totalWeekdays;
+            if ($attendanceRecord) {
+                $attendanceThisMonth = $attendanceRecord->days_present;
+                $attendanceTotalDays = $attendanceRecord->work_days ?? 22;
+            } else {
+                // Fallback: estimasi hari kerja yang sudah berlalu bulan ini
+                $startOfMonth    = $today->copy()->startOfMonth();
+                $totalWeekdays   = 0;
+                $elapsedWeekdays = 0;
+                $cursor          = $startOfMonth->copy();
+                $endOfMonth      = $today->copy()->endOfMonth();
+                while ($cursor->lte($endOfMonth)) {
+                    if (! $cursor->isWeekend()) {
+                        $totalWeekdays++;
+                        if ($cursor->lte($today)) {
+                            $elapsedWeekdays++;
+                        }
+                    }
+                    $cursor->addDay();
+                }
+                $attendanceThisMonth = $elapsedWeekdays;
+                $attendanceTotalDays = $totalWeekdays;
+            }
 
-            // --- Lembur Bulan Ini (Overtime) ---
-            // No overtime table — return 0 as default per spec guidance.
-            $overtimeHours = 0;
+            // --- Lembur Bulan Ini — dari AttendanceRecord karyawan ---
+            $overtimeHours = $attendanceRecord ? (float) $attendanceRecord->overtime_hours : 0;
 
-            // --- Last Take-home Pay ---
-            $lastTakeHome = $lastPayslip ? (float) $lastPayslip->net_total : 0.0;
-            $lastTakeHomeFormatted = $lastPayslip
+            // --- Last Take-home Pay — dari PayrollItem karyawan, bukan net_total payroll ---
+            $lastTakeHome          = $lastPayslipItem ? (float) $lastPayslipItem->net_pay : 0.0;
+            $lastTakeHomeFormatted = $lastPayslipItem
                 ? 'Rp '.$this->formatRupiah($lastTakeHome)
                 : '-';
 
-            // Build KPI array (Req 3.1)
             $kpis = [
-                'next_payday_date' => $nextPaydayLabel,
-                'next_payday_days' => $nextPaydayDays,
-                'attendance_this_month' => $attendanceThisMonth,
-                'attendance_total_days' => $attendanceTotalDays,
-                'overtime_hours' => $overtimeHours,
-                'last_take_home' => $lastTakeHomeFormatted,
+                'next_payday_date'       => $nextPaydayLabel,
+                'next_payday_days'       => $nextPaydayDays,
+                'attendance_this_month'  => $attendanceThisMonth,
+                'attendance_total_days'  => $attendanceTotalDays,
+                'overtime_hours'         => $overtimeHours,
+                'last_take_home'         => $lastTakeHomeFormatted,
             ];
 
         } catch (\Throwable $e) {
@@ -903,10 +963,12 @@ class DashboardController extends Controller
 
         $data = [
             'isSuperAdminViewing' => $user->isSuperAdmin(),
-            'kpis' => $kpis,
-            'lastPayslip' => $lastPayslip,
-            'employee' => $employee,
-            'error' => $error,
+            'kpis'           => $kpis,
+            'lastPayslip'    => $lastPayslip,
+            'lastPayslipItem'=> $lastPayslipItem ?? null,
+            'employee'       => $employee,
+            'error'          => $error,
+            'isEmpty'        => $employee === null,
         ];
 
         return view('payflow.app', array_merge(['page' => 'dashboard-employee'], $data));

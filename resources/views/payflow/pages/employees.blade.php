@@ -13,7 +13,7 @@
         :cta-url="route('employees.create')"
     />
     <div style="display:flex; justify-content:center; margin-top:12px;">
-        <button type="button" class="btn btn-secondary">Import CSV</button>
+        <a href="{{ route('employees.import') }}" class="btn btn-secondary">Import CSV</a>
     </div>
 @else
 
