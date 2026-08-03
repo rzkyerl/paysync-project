@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Company;
 use App\Models\Employee;
 use App\Models\Payroll;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -31,6 +32,31 @@ class DashboardController extends Controller
     ];
 
     /**
+     * Page-level role matrix for the catch-all /app/{page?} route.
+     *
+     * Dedicated routes can still have their own middleware/policies, but every
+     * dashboard shell page must be guarded here so direct URL access cannot
+     * bypass sidebar/search visibility rules.
+     *
+     * @var array<string, array<int, string>>
+     */
+    private const PAGE_ROLE_MAP = [
+        'dashboard-hr' => ['super_admin', 'hr_manager'],
+        'dashboard-finance' => ['super_admin', 'finance_manager'],
+        'dashboard-employee' => ['super_admin', 'employee'],
+        'employees' => ['super_admin', 'hr_manager', 'finance_manager'],
+        'attendance' => ['super_admin', 'hr_manager'],
+        'payroll' => ['super_admin', 'hr_manager'],
+        'approval' => ['super_admin', 'finance_manager'],
+        'payslips' => ['super_admin', 'hr_manager', 'finance_manager'],
+        'disbursement' => ['super_admin', 'finance_manager'],
+        'reconciliation' => ['super_admin', 'finance_manager'],
+        'reports' => ['super_admin', 'hr_manager', 'finance_manager'],
+        'settings' => ['super_admin'],
+        'audit' => ['super_admin'],
+    ];
+
+    /**
      * Render an application page using the authenticated user's workspace.
      */
     public function show(Request $request, string $page = 'dashboard-hr'): View|RedirectResponse
@@ -39,13 +65,7 @@ class DashboardController extends Controller
 
         $user = $request->user();
 
-        $dashboardRoleMap = [
-            'dashboard-hr' => ['super_admin', 'hr_manager'],
-            'dashboard-finance' => ['super_admin', 'finance_manager'],
-            'dashboard-employee' => ['super_admin', 'employee'],
-        ];
-
-        if (isset($dashboardRoleMap[$page]) && ! $user->hasAnyRole($dashboardRoleMap[$page])) {
+        if (! $this->userCanAccessPage($user, $page)) {
             return redirect()->to('/app/'.$user->defaultDashboard());
         }
 
@@ -650,6 +670,13 @@ class DashboardController extends Controller
         }
 
         return number_format($amount, 0, ',', '.');
+    }
+
+    private function userCanAccessPage(User $user, string $page): bool
+    {
+        $allowedRoles = self::PAGE_ROLE_MAP[$page] ?? [];
+
+        return $allowedRoles !== [] && $user->hasAnyRole($allowedRoles);
     }
 
     /**

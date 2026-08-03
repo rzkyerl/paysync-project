@@ -5,6 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Masuk - PaySync</title>
     @include('payflow.partials.styles')
+    <style>
+        .demo-accounts { margin-top: 4px; border: 1px solid var(--line); border-radius: 12px; background: #f8fafc; overflow: hidden; }
+        .demo-accounts[open] { border-color: var(--brand-line); background: var(--brand-soft); }
+        .demo-toggle {
+            display: flex; align-items: center; gap: 10px; width: 100%;
+            padding: 12px 14px; cursor: pointer; list-style: none;
+            font-size: 14px; font-weight: 700; color: var(--navy);
+        }
+        .demo-toggle::-webkit-details-marker { display: none; }
+        .demo-toggle-icon { width: 20px; height: 20px; display: grid; place-items: center; flex-shrink: 0; color: var(--brand); transition: transform .25s cubic-bezier(.2,.8,.2,1); }
+        .demo-accounts[open] .demo-toggle-icon { transform: rotate(180deg); }
+        .demo-toggle-text { flex: 1; }
+        .demo-panel { padding: 0 14px 14px; }
+        .demo-hint { margin: 0 0 12px; font-size: 12.5px; color: var(--muted); line-height: 1.55; }
+        .demo-hint code { background: #fff; border: 1px solid var(--line); border-radius: 5px; padding: 1px 6px; font-size: 12px; color: var(--navy); font-weight: 700; }
+        .demo-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+        .demo-role {
+            display: flex; align-items: center; gap: 10px; text-align: left;
+            padding: 10px 11px; border-radius: 10px; cursor: pointer;
+            border: 1px solid var(--line); background: #fff; transition: border-color .15s ease, box-shadow .15s ease, transform .12s ease;
+        }
+        .demo-role:hover { border-color: var(--brand); box-shadow: 0 4px 12px rgba(15, 52, 115, .10); transform: translateY(-1px); }
+        .demo-role:active { transform: translateY(0); }
+        .demo-role-badge {
+            width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
+            display: grid; place-items: center; font-size: 11px; font-weight: 800;
+            color: var(--brand); background: var(--brand-soft); border: 1px solid var(--brand-line);
+        }
+        .demo-role-body { display: grid; min-width: 0; }
+        .demo-role-body strong { font-size: 12.5px; color: var(--navy); line-height: 1.2; }
+        .demo-role-body small { font-size: 11px; color: var(--muted); line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .demo-note { margin: 10px 0 0; font-size: 11.5px; color: var(--muted); line-height: 1.5; }
+        @media (max-width: 480px) {
+            .demo-grid { grid-template-columns: 1fr; }
+        }
+    </style>
 </head>
 <body>
     <main class="auth-page">
@@ -85,7 +121,7 @@
                                 type="password"
                                 name="password"
                                 autocomplete="current-password"
-                                placeholder="••••••••"
+                                placeholder="********"
                                 required
                             >
                             <button type="button" class="input-eye" aria-label="Tampilkan password" onclick="togglePassword(this)">
@@ -115,7 +151,51 @@
 
                 <div class="auth-divider"><span>atau</span></div>
 
-                <p style="text-align:center; font-size:14px; color:var(--muted); margin:0;">
+                <details class="demo-accounts" id="demoAccounts">
+                    <summary class="demo-toggle">
+                        <span class="demo-toggle-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                        </span>
+                        <span class="demo-toggle-text">Coba akun demo</span>
+                        <span class="badge badge-blue">Tanpa daftar</span>
+                    </summary>
+                    <div class="demo-panel">
+                        <p class="demo-hint">Pilih peran untuk mengisi form otomatis. Semua akun memakai password <code>password</code>.</p>
+                        <div class="demo-grid">
+                            <button type="button" class="demo-role" data-email="ceo@paysync.test">
+                                <span class="demo-role-badge">CEO</span>
+                                <span class="demo-role-body">
+                                    <strong>Super Admin</strong>
+                                    <small>ceo@paysync.test</small>
+                                </span>
+                            </button>
+                            <button type="button" class="demo-role" data-email="hr@paysync.test">
+                                <span class="demo-role-badge">HR</span>
+                                <span class="demo-role-body">
+                                    <strong>HR Manager</strong>
+                                    <small>hr@paysync.test</small>
+                                </span>
+                            </button>
+                            <button type="button" class="demo-role" data-email="finance@paysync.test">
+                                <span class="demo-role-badge">FIN</span>
+                                <span class="demo-role-body">
+                                    <strong>Finance</strong>
+                                    <small>finance@paysync.test</small>
+                                </span>
+                            </button>
+                            <button type="button" class="demo-role" data-email="employee@paysync.test">
+                                <span class="demo-role-badge">EMP</span>
+                                <span class="demo-role-body">
+                                    <strong>Karyawan</strong>
+                                    <small>employee@paysync.test</small>
+                                </span>
+                            </button>
+                        </div>
+                        <p class="demo-note">Data demo sudah terisi: karyawan, kehadiran, payroll, dan anomali untuk eksplorasi.</p>
+                    </div>
+                </details>
+
+                <p style="text-align:center; font-size:14px; color:var(--muted); margin:16px 0 0;">
                     Belum memiliki akun perusahaan?
                     <a href="/register" style="color:var(--brand); font-weight:700;">Daftar Gratis</a>
                 </p>
@@ -135,6 +215,33 @@
             eyeOn.style.display = isHidden ? '' : 'none';
             btn.setAttribute('aria-label', isHidden ? 'Sembunyikan password' : 'Tampilkan password');
         }
+
+        (() => {
+            const form = document.querySelector('form[action="{{ route('login.attempt') }}"]');
+            const details = document.getElementById('demoAccounts');
+            if (!form || !details) return;
+
+            const emailInput = form.querySelector('#email');
+            const passwordInput = form.querySelector('#password');
+            const submitBtn = form.querySelector('button[type="submit"]');
+
+            details.querySelectorAll('.demo-role').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    if (!emailInput || !passwordInput) return;
+                    emailInput.value = btn.dataset.email;
+                    passwordInput.value = 'password';
+                    emailInput.classList.remove('input-error');
+                    passwordInput.classList.remove('input-error');
+                    if (submitBtn) submitBtn.focus();
+                });
+            });
+
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('demo') === '1') {
+                details.open = true;
+                details.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        })();
     </script>
 </body>
 </html>

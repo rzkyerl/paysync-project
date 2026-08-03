@@ -252,23 +252,23 @@
                     <div class="section-content" style="display:grid; gap:10px;">
                         <div class="detail-row">
                             <span class="detail-label">NIP</span>
-                            <span class="detail-value" x-text="fields.nip.value || '—'" style="font-family:monospace;"></span>
+                            <span class="detail-value" x-text="fields.nip.value || '-'" style="font-family:monospace;"></span>
                         </div>
                         <div class="detail-row">
                             <span class="detail-label">Nama</span>
-                            <span class="detail-value" x-text="fields.name.value || '—'"></span>
+                            <span class="detail-value" x-text="fields.name.value || '-'"></span>
                         </div>
                         <div class="detail-row">
                             <span class="detail-label">Departemen</span>
-                            <span class="detail-value" x-text="fields.department.value || '—'"></span>
+                            <span class="detail-value" x-text="fields.department.value || '-'"></span>
                         </div>
                         <div class="detail-row">
                             <span class="detail-label">Status Kerja</span>
-                            <span class="detail-value" x-text="fields.work_status.value || '—'"></span>
+                            <span class="detail-value" x-text="fields.work_status.value || '-'"></span>
                         </div>
                         <div class="detail-row" style="border-bottom:0;">
                             <span class="detail-label">Gaji Pokok</span>
-                            <span class="detail-value" x-text="fields.basic_salary.value ? 'Rp ' + Number(fields.basic_salary.value).toLocaleString('id-ID') : '—'"></span>
+                            <span class="detail-value" x-text="fields.basic_salary.value ? 'Rp ' + Number(fields.basic_salary.value).toLocaleString('id-ID') : '-'"></span>
                         </div>
                     </div>
                 </div>

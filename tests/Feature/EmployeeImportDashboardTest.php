@@ -46,14 +46,17 @@ class EmployeeImportDashboardTest extends TestCase
 
         $this->actingAs($hrManager)
             ->post(route('employees.import.store'), ['file' => $file])
-            ->assertRedirect(route('employees.index'));
+            ->assertRedirect(route('dashboard.hr'));
 
         $this->assertDatabaseCount('employees', 7);
 
-        $dashboard = $this->get(route('dashboard.hr'))->assertOk();
+        // Verifikasi semua karyawan tersimpan dan terlihat di halaman employees.index
+        $employeesPage = $this->actingAs($hrManager)
+            ->get(route('employees.index'))
+            ->assertOk();
 
         foreach (range(1, 7) as $number) {
-            $dashboard->assertSee('Pegawai Import '.$number);
+            $employeesPage->assertSee('Pegawai Import '.$number);
         }
     }
 }

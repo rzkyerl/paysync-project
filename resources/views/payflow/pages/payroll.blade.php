@@ -28,12 +28,13 @@
     $statusOrder = ['draft' => 0, 'needs_review' => 2, 'pending_approval' => 3, 'approved' => 4, 'disbursed' => 5];
     $currentOrder = $statusOrder[$activePayroll?->status ?? 'draft'] ?? 0;
 
-    function stepState(array $step, int $currentOrder, array $statusOrder): string {
+    // Gunakan closure (bukan named function) agar tidak crash saat view di-render ulang dalam proses yang sama
+    $stepState = function(array $step, int $currentOrder, array $statusOrder): string {
         $stepOrder = max(array_map(fn($s) => $statusOrder[$s] ?? 0, $step['statuses']));
         if ($currentOrder > $stepOrder) return 'done';
         if ($currentOrder === $stepOrder) return 'active';
         return 'pending';
-    }
+    };
 @endphp
 
 @if($isEmpty ?? false)
@@ -86,7 +87,7 @@
         <div class="kpi-value" style="font-size:20px;">Rp {{ number_format((float)$activePayroll->net_total / 1_000_000, 2, ',', '.') }} Jt</div>
         <div class="kpi-footer">
             <span class="badge {{ $activePayroll->anomaly_count > 0 ? 'badge-red' : 'badge-green' }}">
-                {{ $activePayroll->anomaly_count > 0 ? $activePayroll->anomaly_count.' anomali' : '✓ Bersih' }}
+                {{ $activePayroll->anomaly_count > 0 ? $activePayroll->anomaly_count.' anomali' : '[OK] Bersih' }}
             </span>
         </div>
     </div>
@@ -141,7 +142,7 @@
     <div style="padding:0 20px 16px;">
         <div style="display:flex; align-items:flex-start; gap:0; overflow-x:auto; padding-bottom:4px;">
             @foreach($progressSteps as $i => $step)
-            @php $state = stepState($step, $currentOrder, $statusOrder); @endphp
+            @php $state = $stepState($step, $currentOrder, $statusOrder); @endphp
             <div style="flex:1; min-width:80px; display:flex; flex-direction:column; align-items:center; position:relative;">
                 {{-- Connector line --}}
                 @if($i > 0)
@@ -174,7 +175,7 @@
 
         @if($isSuperAdmin)
             <div style="padding:10px 14px; background:#f8fafc; border:1px solid var(--line); border-radius:10px; font-size:13px; color:var(--muted);">
-                Mode Pantau — aksi tersedia untuk HR/Finance sesuai role masing-masing.
+                Mode Pantau - aksi tersedia untuk HR/Finance sesuai role masing-masing.
             </div>
 
         @elseif($userRole === 'hr_manager')
@@ -220,12 +221,12 @@
             @elseif($activePayroll->status === 'approved')
                 <div style="padding:10px 14px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; font-size:13px; color:#166534; display:flex; align-items:center; gap:8px;">
                     <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                    Disetujui Finance — menunggu proses transfer oleh Finance
+                    Disetujui Finance - menunggu proses transfer oleh Finance
                 </div>
             @elseif($activePayroll->status === 'disbursed')
                 <div style="padding:10px 14px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; font-size:13px; color:#166534; display:flex; align-items:center; gap:8px;">
                     <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-                    Transfer selesai — gaji sudah disalurkan
+                    Transfer selesai - gaji sudah disalurkan
                 </div>
             @endif
 
@@ -325,7 +326,7 @@
                             @if($payroll->anomaly_count > 0)
                                 <span class="badge badge-red">{{ $payroll->anomaly_count }}</span>
                             @else
-                                <span style="color:var(--muted);">—</span>
+                                <span style="color:var(--muted);">-</span>
                             @endif
                         </td>
                         <td>

@@ -6,7 +6,7 @@
 @endphp
 
 {{-- ── Period selector ── --}}
-<form method="GET" action="{{ route('app', 'payslips') }}" style="display:flex; align-items:center; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
+<form method="GET" action="{{ route('app.payslips') }}" style="display:flex; align-items:center; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
     <select name="period" class="input" style="max-width:200px;" onchange="this.form.submit()">
         <option value="">-- Pilih Periode --</option>
         @foreach($publishedPayrolls as $p)
@@ -18,7 +18,7 @@
     </select>
     @if($activePayroll)
         <span class="badge {{ $activePayroll->status === 'disbursed' ? 'badge-green' : 'badge-blue' }}">
-            {{ $activePayroll->status === 'disbursed' ? '✓ Transfer Selesai' : 'Disetujui' }}
+            {{ $activePayroll->status === 'disbursed' ? '[OK] Transfer Selesai' : 'Disetujui' }}
         </span>
         <a href="{{ route('payroll.show', $activePayroll) }}" class="btn btn-secondary" style="margin-left:auto;">
             <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -86,7 +86,7 @@
     <div class="section-card">
         <div class="section-header">
             <div>
-                <div style="font-size:16px; font-weight:700; color:var(--navy);">Daftar Slip Gaji — {{ $activePayroll->period_label }}</div>
+                <div style="font-size:16px; font-weight:700; color:var(--navy);">Daftar Slip Gaji - {{ $activePayroll->period_label }}</div>
                 <div class="muted" style="font-size:13px; margin-top:2px;">{{ $payslipItems->count() }} karyawan · klik untuk lihat slip individual</div>
             </div>
         </div>
@@ -118,7 +118,7 @@
                             <td style="text-align:right; font-weight:700; color:var(--navy);">Rp {{ number_format((float)$item->net_pay, 0, ',', '.') }}</td>
                             <td>
                                 @if($item->status === 'transferred')
-                                    <span class="badge badge-green">✓ Transferred</span>
+                                    <span class="badge badge-green">[OK] Transferred</span>
                                 @elseif($activePayroll->status === 'approved')
                                     <span class="badge badge-blue">Approved</span>
                                 @else

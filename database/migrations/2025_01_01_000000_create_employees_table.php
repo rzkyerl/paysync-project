@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('position');
             $table->enum('work_status', ['active', 'probation', 'contract', 'inactive']);
             $table->date('join_date');
-            $table->enum('bank_account_status', ['verified', 'unverified', 'rejected']);
+            $table->enum('bank_account_status', ['verified', 'unverified', 'rejected'])->default('unverified');
             $table->string('bank_account_number')->nullable();
             $table->string('bank_name')->nullable();
             $table->decimal('basic_salary', 15, 2)->default(0);

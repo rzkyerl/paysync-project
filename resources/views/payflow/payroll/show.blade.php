@@ -17,7 +17,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Payroll {{ $payroll->period_label }} – PaySync</title>
+    <title>Payroll {{ $payroll->period_label }} - PaySync</title>
     @include('payflow.partials.styles')
 </head>
 <body>
@@ -98,7 +98,7 @@
             <div class="kpi-value" style="font-size:20px;">Rp {{ number_format((float)$payroll->net_total/1_000_000,2,',','.') }} Jt</div>
             <div class="kpi-footer">
                 <span class="badge {{ $payroll->anomaly_count > 0 ? 'badge-red' : 'badge-green' }}">
-                    {{ $payroll->anomaly_count > 0 ? $payroll->anomaly_count.' anomali' : '✓ Bersih' }}
+                    {{ $payroll->anomaly_count > 0 ? $payroll->anomaly_count.' anomali' : '[OK] Bersih' }}
                 </span>
             </div>
         </div>
@@ -258,7 +258,7 @@
                 <div class="muted" style="font-size:13px; margin-top:2px;">{{ $payroll->payrollItems->count() }} karyawan</div>
             </div>
             <span class="badge {{ $payroll->anomaly_count > 0 ? 'badge-red' : 'badge-green' }}">
-                {{ $payroll->anomaly_count > 0 ? $payroll->anomaly_count.' anomali' : '✓ Semua bersih' }}
+                {{ $payroll->anomaly_count > 0 ? $payroll->anomaly_count.' anomali' : '[OK] Semua bersih' }}
             </span>
         </div>
         <div class="section-content" style="padding:0;">
@@ -292,7 +292,7 @@
                                         {{ $item->anomaly_acknowledged ? 'Acknowledged' : '⚠ Anomali' }}
                                     </span>
                                 @else
-                                    <span class="badge badge-green">✓ OK</span>
+                                    <span class="badge badge-green">[OK] OK</span>
                                 @endif
                             </td>
                             @if($isHr && $payroll->status === 'needs_review')

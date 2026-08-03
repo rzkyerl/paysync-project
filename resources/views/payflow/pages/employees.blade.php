@@ -102,7 +102,7 @@
             <a href="{{ route('employees.index') }}" class="btn btn-secondary">Reset Filter</a>
         </div>
     @else
-        {{-- Completely empty —no employees at all --}}
+        {{-- Completely empty -no employees at all --}}
         <div class="card" style="margin-top:16px; text-align:center; padding:48px 24px;">
             <div style="font-size:40px; margin-bottom:12px;">👥</div>
             <h3 style="margin:0 0 8px; color:var(--navy);">Belum ada karyawan</h3>

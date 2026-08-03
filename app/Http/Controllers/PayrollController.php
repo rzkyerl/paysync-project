@@ -9,13 +9,14 @@ use App\Services\ActivityLogger;
 use App\Services\AttendanceCsvImporter;
 use App\Services\NotificationService;
 use App\Services\PayrollService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class PayrollController extends Controller
 {
-    private const ALLOWED_STATUSES = ['draft', 'needs_review', 'pending_approval', 'approved', 'disbursed'];
+    private const ALLOWED_STATUSES = ['draft', 'needs_review', 'pending_approval', 'approved', 'disbursed', 'disputed'];
 
     private const ALLOWED_SORT_COLUMNS = ['period', 'employee_count', 'gross_total', 'net_total', 'status'];
 
@@ -24,7 +25,7 @@ class PayrollController extends Controller
     public function index(Request $request): View|RedirectResponse
     {
         $user = $request->user();
-        abort_if(! $user->hasAnyRole(['super_admin', 'hr_manager', 'finance_manager']) && $user->company_id !== null, 403);
+        abort_if(! $user->hasAnyRole(['super_admin', 'hr_manager', 'finance_manager']) || $user->company_id === null, 403);
         $statusFilter = in_array($request->status, self::ALLOWED_STATUSES, true) ? $request->status : null;
         $sortBy = in_array($request->sort, self::ALLOWED_SORT_COLUMNS, true) ? $request->sort : 'period';
         $sortDir = in_array($request->dir, ['asc', 'desc'], true) ? $request->dir : 'desc';
@@ -59,13 +60,35 @@ class PayrollController extends Controller
             'period' => ['required', 'date_format:Y-m'],
             'period_label' => ['required', 'string', 'max:100'],
         ]);
+
         if (Payroll::where('company_id', $user->company_id)->where('period', $validated['period'])->exists()) {
             return back()->withInput()->withErrors(['period' => 'Periode payroll tersebut sudah ada.']);
         }
-        $payroll = Payroll::create([
-            'company_id' => $user->company_id, 'period' => $validated['period'], 'period_label' => $validated['period_label'],
-            'status' => 'draft', 'employee_count' => 0, 'gross_total' => 0, 'deduction_total' => 0, 'net_total' => 0,
-        ]);
+
+        DB::transaction(function () use ($user, $validated) {
+            // Use firstOrCreate to atomically handle the race condition:
+            // even if the pre-check passes, a concurrent request could
+            // insert a duplicate — firstOrCreate + the DB unique constraint
+            // will ensure only one row is created.
+            Payroll::firstOrCreate(
+                [
+                    'company_id' => $user->company_id,
+                    'period' => $validated['period'],
+                ],
+                [
+                    'period_label' => $validated['period_label'],
+                    'status' => 'draft',
+                    'employee_count' => 0,
+                    'gross_total' => 0,
+                    'deduction_total' => 0,
+                    'net_total' => 0,
+                ]
+            );
+        });
+
+        $payroll = Payroll::where('company_id', $user->company_id)
+            ->where('period', $validated['period'])
+            ->firstOrFail();
 
         ActivityLogger::record($request, 'payroll', 'payroll.created',
             "Payroll {$payroll->period_label} dibuat",
@@ -90,14 +113,13 @@ class PayrollController extends Controller
     public function importAttendance(Request $request, Payroll $payroll): View|RedirectResponse
     {
         $this->authorizePayroll($request, $payroll, ['hr_manager']);
-
         if (! in_array($payroll->status, ['draft', 'needs_review'], true)) {
             session()->flash('toast', [
                 'type'    => 'warning',
                 'message' => "Payroll {$payroll->period_label} sudah berstatus ".ucfirst(str_replace('_', ' ', $payroll->status))." dan tidak bisa diubah.",
             ]);
 
-            return redirect()->route('app', 'attendance');
+            return redirect()->route('app.attendance');
         }
 
         return view('payflow.payroll.attendance-import', compact('payroll'));
@@ -198,7 +220,10 @@ class PayrollController extends Controller
         if (! $service->canSubmit($payroll)) {
             return back()->with('error', 'Masih ada anomali yang belum di-acknowledge.');
         }
-        $payroll->transitionTo('pending_approval', ['submitted_by' => $request->user()->id]);
+
+        DB::transaction(function () use ($payroll, $request): void {
+            $payroll->transitionTo('pending_approval', ['submitted_by' => $request->user()->id]);
+        });
 
         ActivityLogger::record($request, 'payroll', 'payroll.submitted',
             "Payroll {$payroll->period_label} diajukan untuk persetujuan",
@@ -222,7 +247,10 @@ class PayrollController extends Controller
     {
         $this->authorizePayroll($request, $payroll, ['finance_manager', 'super_admin']);
         abort_if($payroll->status !== 'pending_approval', 422);
-        $payroll->transitionTo('approved', ['approved_by' => $request->user()->id]);
+
+        DB::transaction(function () use ($payroll, $request): void {
+            $payroll->transitionTo('approved', ['approved_by' => $request->user()->id]);
+        });
 
         ActivityLogger::record($request, 'payroll', 'payroll.approved',
             "Payroll {$payroll->period_label} disetujui",
@@ -248,7 +276,10 @@ class PayrollController extends Controller
         $this->authorizePayroll($request, $payroll, ['finance_manager', 'super_admin']);
         abort_if($payroll->status !== 'pending_approval', 422);
         $validated = $request->validate(['rejection_note' => ['required', 'string', 'max:2000']]);
-        $payroll->transitionTo('needs_review', ['rejection_note' => $validated['rejection_note']]);
+
+        DB::transaction(function () use ($payroll, $validated): void {
+            $payroll->transitionTo('needs_review', ['rejection_note' => $validated['rejection_note']]);
+        });
 
         ActivityLogger::record($request, 'payroll', 'payroll.rejected',
             "Payroll {$payroll->period_label} dikembalikan untuk diperbaiki",
@@ -275,9 +306,12 @@ class PayrollController extends Controller
         abort_if($payroll->status !== 'approved', 422);
         $request->validate(['proof' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120']]);
         $proof = $request->file('proof')?->store('disbursements', 'local');
-        $payroll->transitionTo('disbursed', ['disbursed_by' => $request->user()->id]);
-        $payroll->update(array_filter(['disbursement_proof' => $proof]));
-        $payroll->payrollItems()->update(['status' => 'transferred', 'disbursed_at' => now()]);
+
+        DB::transaction(function () use ($payroll, $request, $proof): void {
+            $payroll->transitionTo('disbursed', ['disbursed_by' => $request->user()->id]);
+            $payroll->update(array_filter(['disbursement_proof' => $proof]));
+            $payroll->payrollItems()->update(['status' => 'transferred', 'disbursed_at' => now()]);
+        });
 
         ActivityLogger::record($request, 'payroll', 'payroll.disbursed',
             "Payroll {$payroll->period_label} berhasil disalurkan",
@@ -319,6 +353,65 @@ class PayrollController extends Controller
         return back()->with('status', 'Payroll berhasil disburse.');
     }
 
+    public function dispute(Request $request, Payroll $payroll): RedirectResponse
+    {
+        $this->authorizePayroll($request, $payroll, ['finance_manager', 'super_admin']);
+        abort_if($payroll->status !== 'disbursed', 422);
+        $validated = $request->validate(['dispute_reason' => ['required', 'string', 'max:2000']]);
+
+        DB::transaction(function () use ($payroll, $validated, $request): void {
+            $payroll->transitionTo('disputed', [
+                'dispute_reason' => $validated['dispute_reason'],
+                'disputed_by' => $request->user()->id,
+            ]);
+        });
+
+        ActivityLogger::record($request, 'payroll', 'payroll.disputed',
+            "Payroll {$payroll->period_label} ditandai disputed untuk revisi",
+            'payroll', $payroll->id,
+            ['period' => $payroll->period, 'reason' => $validated['dispute_reason']]
+        );
+
+        app(NotificationService::class)->notifyRoles(
+            $payroll->company_id,
+            ['hr_manager', 'finance_manager', 'super_admin'],
+            'payroll.disputed',
+            'Payroll butuh revisi',
+            "Payroll {$payroll->period_label} ditandai untuk perbaikan setelah disburse.",
+            route('payroll.show', $payroll, false),
+            ['payroll_id' => $payroll->id, 'period' => $payroll->period],
+        );
+
+        return back()->with('status', 'Payroll ditandai untuk revisi (disputed).');
+    }
+
+    public function reprocess(Request $request, Payroll $payroll): RedirectResponse
+    {
+        $this->authorizePayroll($request, $payroll, ['hr_manager', 'finance_manager', 'super_admin']);
+        abort_if($payroll->status !== 'disputed', 422);
+
+        DB::transaction(function () use ($payroll, $request): void {
+            $payroll->transitionTo('approved', ['reprocessed_by' => $request->user()->id]);
+        });
+
+        ActivityLogger::record($request, 'payroll', 'payroll.reprocessed',
+            "Payroll {$payroll->period_label} diproses ulang dari disputed ke approved",
+            'payroll', $payroll->id, ['period' => $payroll->period]
+        );
+
+        app(NotificationService::class)->notifyRoles(
+            $payroll->company_id,
+            ['hr_manager', 'finance_manager', 'super_admin'],
+            'payroll.reprocessed',
+            'Payroll siap disalurkan kembali',
+            "Payroll {$payroll->period_label} telah diperbaiki dan siap disburse ulang.",
+            route('payroll.show', $payroll, false),
+            ['payroll_id' => $payroll->id, 'period' => $payroll->period],
+        );
+
+        return back()->with('status', 'Payroll berhasil diproses ulang ke status approved.');
+    }
+
     public function reconcile(Request $request, Payroll $payroll): View
     {
         $this->authorizePayroll($request, $payroll, ['super_admin', 'finance_manager', 'hr_manager']);
@@ -334,7 +427,7 @@ class PayrollController extends Controller
     public function downloadTransferFile(Request $request, Payroll $payroll)
     {
         $this->authorizePayroll($request, $payroll, ['finance_manager', 'super_admin']);
-        abort_if(! in_array($payroll->status, ['approved', 'disbursed'], true), 422);
+        abort_if(! in_array($payroll->status, ['approved', 'disbursed', 'disputed'], true), 422);
 
         $format = in_array($request->input('format'), ['generic', 'bca', 'mandiri', 'bni', 'bri'], true)
             ? $request->input('format')

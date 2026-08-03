@@ -28,7 +28,7 @@
             </div>
             <h2 style="margin:0 0 10px; font-size:22px; font-weight:800; color:var(--navy); font-family:var(--font-display); letter-spacing:-0.02em;">Mulai dengan menambahkan karyawan</h2>
             <p class="muted" style="margin:0 0 24px; font-size:14px; line-height:1.7;">
-                Tambahkan data karyawan terlebih dahulu — bisa satu per satu atau import sekaligus via CSV.
+                Tambahkan data karyawan terlebih dahulu - bisa satu per satu atau import sekaligus via CSV.
                 Setelah itu, proses payroll pertama bisa dimulai.
             </p>
             <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
@@ -42,7 +42,7 @@
                     Import CSV
                 </a>
                 @else
-                <p class="muted" style="font-size:13px; margin:0;">Mode Pantau — aksi tersedia untuk HR Manager.</p>
+                <p class="muted" style="font-size:13px; margin:0;">Mode Pantau - aksi tersedia untuk HR Manager.</p>
                 @endif
             </div>
         </div>
@@ -79,10 +79,10 @@
             </div>
         </div>
     @empty
-        <div class="kpi-modern kpi-blue"><div class="kpi-label">Karyawan Aktif</div><div class="kpi-value">—</div></div>
-        <div class="kpi-modern kpi-amber"><div class="kpi-label">Kehadiran Periode Ini</div><div class="kpi-value">—</div></div>
-        <div class="kpi-modern kpi-green"><div class="kpi-label">Status Payroll</div><div class="kpi-value">—</div></div>
-        <div class="kpi-modern kpi-blue"><div class="kpi-label">Estimasi Take-home Pay</div><div class="kpi-value">—</div></div>
+        <div class="kpi-modern kpi-blue"><div class="kpi-label">Karyawan Aktif</div><div class="kpi-value">-</div></div>
+        <div class="kpi-modern kpi-amber"><div class="kpi-label">Kehadiran Periode Ini</div><div class="kpi-value">-</div></div>
+        <div class="kpi-modern kpi-green"><div class="kpi-label">Status Payroll</div><div class="kpi-value">-</div></div>
+        <div class="kpi-modern kpi-blue"><div class="kpi-label">Estimasi Take-home Pay</div><div class="kpi-value">-</div></div>
     @endforelse
 </div>
 
@@ -99,9 +99,9 @@
     <div style="flex:1; min-width:180px;">
         <div style="font-weight:700; font-size:14px; color:var(--navy);">
             @if($isFirstImport)
-                Data kehadiran belum diimport — Periode {{ $importablePayroll->period_label }}
+                Data kehadiran belum diimport - Periode {{ $importablePayroll->period_label }}
             @else
-                {{ $importedRecords }} record kehadiran sudah diimport — Periode {{ $importablePayroll->period_label }}
+                {{ $importedRecords }} record kehadiran sudah diimport - Periode {{ $importablePayroll->period_label }}
             @endif
         </div>
         <div class="muted" style="font-size:12px; margin-top:2px;">
@@ -121,7 +121,7 @@
             <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Download Template
         </a>
-        <a href="{{ route('app', 'attendance') }}" class="btn btn-secondary" style="font-size:13px;">
+        <a href="{{ route('app.attendance') }}" class="btn btn-secondary" style="font-size:13px;">
             Lihat Semua →
         </a>
     </div>
@@ -168,7 +168,7 @@
             @if (($actionItemCount ?? 0) > 0)
                 <span class="badge badge-red">{{ $actionItemCount }} perlu tindakan</span>
             @else
-                <span class="badge badge-green">✓ Semua beres</span>
+                <span class="badge badge-green">[OK] Semua beres</span>
             @endif
         </div>
         <div class="section-content" style="display:grid; gap:8px;">
@@ -199,11 +199,11 @@
                 <div class="quick-actions">
                     <a href="{{ route('employees.index') }}" class="quick-action-btn primary">Cek Rekening</a>
                     <a href="{{ route('payroll.index') }}" class="quick-action-btn">Review Payroll</a>
-                    <a href="{{ route('app', 'attendance') }}" class="quick-action-btn">Kehadiran</a>
+                    <a href="{{ route('app.attendance') }}" class="quick-action-btn">Kehadiran</a>
                 </div>
             @else
                 <div class="quick-actions" style="margin-top:8px;">
-                    <a href="{{ route('app', 'attendance') }}" class="quick-action-btn">Lihat Kehadiran</a>
+                    <a href="{{ route('app.attendance') }}" class="quick-action-btn">Lihat Kehadiran</a>
                     <a href="{{ route('payroll.index') }}" class="quick-action-btn">Payroll</a>
                 </div>
             @endif
@@ -258,7 +258,7 @@
                             $workBadge = match ($employee->work_status) { 'active' => 'badge-green', 'probation' => 'badge-amber', 'contract' => 'badge-blue', 'inactive' => 'badge-red', default => '' };
                             $workLabel = match ($employee->work_status) { 'active' => 'Aktif', 'probation' => 'Probation', 'contract' => 'Kontrak', 'inactive' => 'Nonaktif', default => $employee->work_status };
                             $bankBadge = match ($employee->bank_account_status) { 'verified' => 'badge-green', 'unverified' => 'badge-amber', 'rejected' => 'badge-red', default => '' };
-                            $bankLabel = match ($employee->bank_account_status) { 'verified' => 'Verified', 'unverified' => 'Pending', 'rejected' => 'Ditolak', default => ($employee->bank_account_status ?? '—') };
+                            $bankLabel = match ($employee->bank_account_status) { 'verified' => 'Verified', 'unverified' => 'Pending', 'rejected' => 'Ditolak', default => ($employee->bank_account_status ?? '-') };
                         @endphp
                         <tr>
                             <td>

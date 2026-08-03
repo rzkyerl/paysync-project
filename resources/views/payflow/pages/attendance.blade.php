@@ -12,7 +12,7 @@
 
 {{-- ── Period selector ── --}}
 @if($attendancePayrolls->isNotEmpty())
-<form method="GET" action="{{ route('app', 'attendance') }}" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:20px;">
+<form method="GET" action="{{ route('app.attendance') }}" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:20px;">
     <select name="payroll_id" class="input" style="max-width:220px;" onchange="this.form.submit()">
         <option value="">-- Pilih Periode --</option>
         @foreach($attendancePayrolls as $p)
@@ -90,7 +90,7 @@
         <div>
             <div style="font-size:16px; font-weight:700; color:var(--navy);">
                 Data Kehadiran
-                @if($attendancePayroll) — {{ $attendancePayroll->period_label }} @endif
+                @if($attendancePayroll) - {{ $attendancePayroll->period_label }} @endif
             </div>
             <div class="muted" style="font-size:13px; margin-top:2px;">
                 {{ $attendanceRecords->count() }} record kehadiran tersedia
@@ -129,7 +129,7 @@
                     Import CSV Kehadiran
                 </a>
                 @else
-                <span class="badge badge-amber">🔒 Payroll sudah {{ ucfirst(str_replace('_',' ',$attendancePayroll->status)) }} — data kehadiran tidak bisa diubah</span>
+                <span class="badge badge-amber">🔒 Payroll sudah {{ ucfirst(str_replace('_',' ',$attendancePayroll->status)) }} - data kehadiran tidak bisa diubah</span>
                 @endif
             </div>
             @endif
@@ -173,7 +173,7 @@
                                 @elseif($record->days_present < 15)
                                     <span class="badge badge-amber">Warning</span>
                                 @else
-                                    <span class="badge badge-green">✓ Valid</span>
+                                    <span class="badge badge-green">[OK] Valid</span>
                                 @endif
                             </td>
                         </tr>

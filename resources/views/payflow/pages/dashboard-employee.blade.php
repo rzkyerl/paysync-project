@@ -1,4 +1,4 @@
-{{-- Dashboard Employee — real data from DashboardController::employee() --}}
+{{-- Dashboard Employee - real data from DashboardController::employee() --}}
 {{-- Variables: $kpis, $lastPayslip, $employee, $error --}}
 
 <div x-data="{ loading: true }" x-init="$nextTick(() => loading = false)">
@@ -19,7 +19,7 @@
         @foreach(['Next Payday', 'Kehadiran Bulan Ini', 'Lembur Bulan Ini', 'Take-home Pay Terakhir'] as $label)
             <div class="kpi-modern kpi-blue">
                 <div class="kpi-label">{{ $label }}</div>
-                <div class="kpi-value">—</div>
+                <div class="kpi-value">-</div>
                 <div class="kpi-footer"><span class="badge">Belum ada data</span></div>
             </div>
         @endforeach
@@ -165,11 +165,11 @@
                 </div>
 
                 <div class="quick-actions">
-                    <a href="{{ route('app', 'payslips') }}" class="quick-action-btn primary">
+                    <a href="{{ route('app.payslips') }}" class="quick-action-btn primary">
                         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                         Lihat Detail
                     </a>
-                    <a href="{{ route('app', 'payslips') }}" class="quick-action-btn">
+                    <a href="{{ route('app.payslips') }}" class="quick-action-btn">
                         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                         Riwayat Slip
                     </a>
@@ -180,7 +180,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0121 9.414V19a2 2 0 01-2 2z"/>
                     </svg>
                     <p class="muted" style="margin:0 0 8px; font-size:13px;">Belum ada slip gaji yang tersedia.</p>
-                    <a href="{{ route('app', 'payslips') }}" class="quick-action-btn" style="display:inline-flex;">Cek Halaman Slip Gaji</a>
+                    <a href="{{ route('app.payslips') }}" class="quick-action-btn" style="display:inline-flex;">Cek Halaman Slip Gaji</a>
                 </div>
             @endif
         </div>
@@ -192,7 +192,7 @@
             <h2>Profil & Rekening</h2>
             @if($employee)
                 @if($employee->bank_account_status === 'verified')
-                    <span class="badge badge-green">✓ Terverifikasi</span>
+                    <span class="badge badge-green">[OK] Terverifikasi</span>
                 @elseif($employee->bank_account_status === 'rejected')
                     <span class="badge badge-red">Ditolak</span>
                 @else
@@ -229,7 +229,7 @@
                         <span class="detail-label">No. Rekening</span>
                         <span class="detail-value">
                             @if($employee->bank_account_number)
-                                •••• {{ substr($employee->bank_account_number, -4) }}
+                                **** {{ substr($employee->bank_account_number, -4) }}
                             @else -
                             @endif
                         </span>
@@ -259,7 +259,7 @@
                 @endif
 
                 <div class="quick-actions">
-                    <a href="{{ route('app', 'payslips') }}" class="quick-action-btn primary" style="font-size:12px;">
+                    <a href="{{ route('app.payslips') }}" class="quick-action-btn primary" style="font-size:12px;">
                         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                         Semua Slip Gaji
                     </a>

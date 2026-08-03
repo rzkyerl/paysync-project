@@ -200,7 +200,7 @@
                         @endif
                     </div>
                 @else
-                    {{-- Belum punya akun — tampilkan form undangan --}}
+                    {{-- Belum punya akun - tampilkan form undangan --}}
                     <p class="muted" style="font-size:13px; margin:0 0 14px;">
                         Karyawan ini belum memiliki akun. Kirim undangan agar mereka bisa mengakses slip gaji dan data kehadiran pribadi.
                     </p>

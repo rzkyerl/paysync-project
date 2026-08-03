@@ -23,8 +23,8 @@ class DemoDataSeederTest extends TestCase
 
         $this->assertSame(1, Company::where('name', 'PT Pay Sync')->count());
         $this->assertTrue($company->is_demo);
-        $this->assertSame(3, User::where('is_demo', true)->count());
-        $this->assertSame(5, Employee::where('company_id', $company->id)->count());
+        $this->assertSame(4, User::where('is_demo', true)->count());
+        $this->assertSame(8, Employee::where('company_id', $company->id)->count());
         $this->assertSame(1, Payroll::where('company_id', $company->id)->where('status', 'needs_review')->count());
 
         User::where('is_demo', true)->each(function (User $user) use ($company): void {

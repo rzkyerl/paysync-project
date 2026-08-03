@@ -24,21 +24,21 @@ class NewUserExperienceTest extends TestCase
 
     public function test_new_user_receives_empty_hr_dashboard(): void
     {
+        // User baru (hr_manager) tanpa company akan redirect ke onboarding,
+        // karena DashboardController mendeteksi company_id === null
         $user = User::create([
-            'name' => 'New Empty User',
-            'email' => 'empty.user@example.test',
-            'password' => 'password123',
-            'role' => 'employee',
-            'is_demo' => false,
+            'name'       => 'New Empty User',
+            'email'      => 'empty.user@example.test',
+            'password'   => 'password123',
+            'role'       => 'hr_manager',
+            'is_demo'    => false,
             'company_id' => null,
         ]);
 
+        // User tanpa company diarahkan ke onboarding dulu
         $this->actingAs($user)
             ->get(route('dashboard.hr'))
-            ->assertOk()
-            ->assertViewHas('isDemoUser', false)
-            ->assertViewHas('isEmpty', true)
-            ->assertSee('Belum ada karyawan');
+            ->assertRedirect(route('onboarding'));
     }
 
     public function test_registration_ignores_injected_demo_flag_and_company_id(): void
@@ -62,14 +62,14 @@ class NewUserExperienceTest extends TestCase
     private function registrationData(): array
     {
         return [
-            'name' => 'New User',
-            'email' => 'new.user@example.test',
-            'company' => 'Perusahaan Baru',
-            'company_size' => '1-10',
-            'industry' => 'Technology',
-            'password' => 'password123',
+            'name'                  => 'New User',
+            'email'                 => 'new.user@example.test',
+            'company'               => 'Perusahaan Baru',
+            'company_size'          => '1–20',
+            'industry'              => 'Technology',
+            'password'              => 'password123',
             'password_confirmation' => 'password123',
-            'terms' => '1',
+            'terms'                 => '1',
         ];
     }
 }

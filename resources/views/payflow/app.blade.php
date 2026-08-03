@@ -44,8 +44,7 @@
         $nav['Disbursement'] = [['disbursement', 'Batch Transfer'], ['reconciliation', 'Rekonsiliasi']];
     }
     if ($canSeeEmployee && ! $canSeeHr && ! $canSeeFinance) {
-        $nav['Time Management'] = [['attendance', 'Kehadiran Saya']];
-        $nav['Payroll'] = [['payslips', 'Slip Gaji']];
+        $nav['Payroll'] = [['my-payslips', 'Slip Gaji Saya']];
     }
     if ($canSeeHr || $canSeeFinance) {
         $nav['Reports'] = [['reports', 'Laporan']];
@@ -63,6 +62,7 @@
         'payroll' => 'payroll',
         'approval' => 'approval',
         'payslips' => 'file',
+        'my-payslips' => 'file',
         'disbursement' => 'bank',
         'reconciliation' => 'link',
         'reports' => 'report',
@@ -95,6 +95,7 @@
             'dashboard-employee' => route('dashboard.employee'),
             'employees'          => route('employees.index'),
             'payroll'            => route('payroll.index'),
+            'my-payslips'        => route('payroll.my-payslips'),
         ];
     @endphp
     @foreach ($nav as $group => $items)
@@ -293,29 +294,51 @@
                     </div>
 
                     {{-- Notification Bell --}}
+                    @php
+                        $unreadNotifications = auth()->user()?->unreadNotifications()->latest()->limit(10)->get() ?? collect();
+                        $unreadCount = $unreadNotifications->count();
+                    @endphp
                     <div class="topbar-icon-btn" x-data="{ open: false }" @click.outside="open = false">
-                        <button @click="open = !open" class="topbar-icon-btn-inner" aria-label="Notifikasi" title="Notifikasi">
+                        <button @click="open = !open" class="topbar-icon-btn-inner"
+                            aria-label="Notifikasi ({{ $unreadCount }})"
+                            title="Notifikasi ({{ $unreadCount }})">
                             <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true">
                                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
                                 <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
                             </svg>
-                            <span class="topbar-notif-dot"></span>
+                            @if($unreadCount > 0)
+                                <span class="topbar-notif-dot"></span>
+                            @endif
                         </button>
                         <div class="topbar-dropdown topbar-dropdown--right" x-show="open" x-cloak x-transition style="width:300px;">
-                            <div class="topbar-dropdown-head">Notifikasi</div>
-                            <div class="topbar-dropdown-item">
-                                <span class="topbar-dropdown-dot topbar-dropdown-dot--amber"></span>
-                                <div><strong>3 rekening belum terverifikasi</strong><div class="muted" style="font-size:12px;">Segera tinjau data karyawan</div></div>
-                            </div>
-                            <div class="topbar-dropdown-item">
-                                <span class="topbar-dropdown-dot topbar-dropdown-dot--blue"></span>
-                                <div><strong>Payroll menunggu approval</strong><div class="muted" style="font-size:12px;">Periode Juli 2026</div></div>
-                            </div>
-                            <div class="topbar-dropdown-item">
-                                <span class="topbar-dropdown-dot topbar-dropdown-dot--green"></span>
-                                <div><strong>Transfer batch berhasil</strong><div class="muted" style="font-size:12px;">48 karyawan — Juni 2026</div></div>
-                            </div>
-                            <a href="/app/audit" class="topbar-dropdown-footer">Lihat semua aktivitas →</a>
+                            <div class="topbar-dropdown-head">Notifikasi ({{ $unreadCount }})</div>
+                            @forelse($unreadNotifications as $notif)
+                                <form method="POST" action="{{ route('notifications.read', $notif) }}" style="display:contents;">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="submit"
+                                       class="topbar-dropdown-item topbar-dropdown-item--link"
+                                       style="text-decoration:none; width:100%; text-align:left;">
+                                        <span class="topbar-dropdown-dot topbar-dropdown-dot--blue"></span>
+                                        <div>
+                                            <strong>{{ $notif->title }}</strong>
+                                            <div class="muted" style="font-size:12px;">{{ $notif->message }}</div>
+                                        </div>
+                                    </button>
+                                </form>
+                            @empty
+                                <div class="topbar-dropdown-item" style="color:var(--muted); font-size:13px;">
+                                    Tidak ada notifikasi baru.
+                                </div>
+                            @endforelse
+                            @if($unreadCount > 0)
+                                <form method="POST" action="{{ route('notifications.read-all') }}" style="margin:0;">
+                                    @csrf
+                                    <button type="submit" class="topbar-dropdown-footer" style="width:100%; border:none; background:none; cursor:pointer; text-align:center;">
+                                        Tandai semua sudah dibaca
+                                    </button>
+                                </form>
+                            @endif
                         </div>
                     </div>
 
@@ -420,7 +443,7 @@
                 }
             });
 
-            // 11.1 — Confirm dialog store
+            // 11.1 - Confirm dialog store
             Alpine.store('confirm', {
                 open: false,
                 title: '',
@@ -435,7 +458,7 @@
                 }
             });
 
-            // 9.1 — Toast store
+            // 9.1 - Toast store
             Alpine.store('toast', {
                 items: [],
                 add(type, message, duration = 4000) {
@@ -469,7 +492,7 @@
         }
     </script>
 
-    {{-- 9.5 — Flash session integration: trigger toast from Laravel flash --}}
+    {{-- 9.5 - Flash session integration: trigger toast from Laravel flash --}}
     @if(session('toast'))
     <meta name="paysync-toast" data-type="{{ session('toast.type') }}" data-message="{{ session('toast.message') }}">
     <script>
@@ -480,7 +503,7 @@
     </script>
     @endif
 
-    {{-- 11.2 — Confirm dialog modal --}}
+    {{-- 11.2 - Confirm dialog modal --}}
     <div
         x-data
         x-cloak
@@ -517,7 +540,7 @@
         </div>
     </div>
 
-    {{-- 9.2 — Toast container: fixed bottom-right, high z-index --}}
+    {{-- 9.2 - Toast container: fixed bottom-right, high z-index --}}
     <div
         x-data
         x-cloak
@@ -562,7 +585,7 @@
         </template>
     </div>
 
-    {{-- 19.4 — Intercept fetch responses for CSRF error 419 --}}
+    {{-- 19.4 - Intercept fetch responses for CSRF error 419 --}}
     <script>
         (function () {
             const originalFetch = window.fetch.bind(window);

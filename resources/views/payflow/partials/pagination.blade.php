@@ -1,6 +1,6 @@
 @php
     /*
-     * Pagination partial — Task 12.2
+     * Pagination partial - Task 12.2
      * Receives: $paginator (LengthAwarePaginator instance)
      * Shows:
      *   - "Menampilkan X-Y dari Z data"
