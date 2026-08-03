@@ -33,6 +33,7 @@
                     <p>PaySync membantu perusahaan mengelola data karyawan, kehadiran, payroll, approval, slip digital, dan transfer gaji massal dalam workflow yang mudah diaudit.</p>
                     <div style="display:flex; flex-wrap:wrap; gap:12px; margin:26px 0 14px;">
                         <a class="btn btn-primary" href="/app/dashboard-hr">Mulai Sekarang</a>
+                        <a class="btn btn-secondary" href="/login?demo=1">Coba Demo</a>
                         <a class="btn btn-secondary" href="#cara-kerja">Lihat Cara Kerja</a>
                     </div>
                     <span class="muted" style="font-size:13px;">Dirancang untuk membantu HR dan Finance bekerja dari satu sumber data yang konsisten.</span>
@@ -110,76 +111,6 @@
             </div>
         </section>
 
-        <!-- Subscription Plans -->
-        <section id="pricing" class="landing-section alt reveal">
-            <div class="container">
-                <div class="section-head section-head--center" style="margin-bottom:48px;">
-                    <p class="muted" style="text-transform:uppercase; letter-spacing:2px; font-size:12px; font-weight:600; margin:0 0 8px;">Paket Berlangganan</p>
-                    <h2>Pilih Paket yang Tepat</h2>
-                    <p class="muted" style="margin:0; font-size:15px;">Semua paket sudah termasuk fitur inti PaySync.</p>
-                </div>
-                <div class="plan-list">
-
-                    <!-- Basic -->
-                    <div class="plan-card reveal">
-                        <span class="plan-badge basic">Pemula</span>
-                        <div class="plan-name">Basic</div>
-                        <div class="plan-price">Rp 999<span style="font-size:18px; font-weight:500;">rb</span></div>
-                        <div class="plan-cycle">per bulan, tagihan bulanan</div>
-                        <hr class="plan-divider">
-                        <ul class="plan-features">
-                            <li>Manajemen data karyawan</li>
-                            <li>Import kehadiran via CSV</li>
-                            <li>Kalkulasi payroll otomatis</li>
-                            <li>Slip gaji digital</li>
-                            <li>Dashboard HR</li>
-                            <li>Dukungan via email</li>
-                        </ul>
-                        <a class="plan-cta light" href="/register">Mulai Sekarang</a>
-                    </div>
-
-                    <!-- Standard (Featured) -->
-                    <div class="plan-card featured reveal">
-                        <span class="plan-badge popular">Paling Populer</span>
-                        <div class="plan-name">Standard</div>
-                        <div class="plan-price">Rp 2,4<span style="font-size:18px; font-weight:500;">jt</span></div>
-                        <div class="plan-cycle">per bulan, tagihan bulanan</div>
-                        <hr class="plan-divider">
-                        <ul class="plan-features">
-                            <li>Semua fitur Basic</li>
-                            <li>Approval workflow Finance</li>
-                            <li>Rekonsiliasi pembayaran</li>
-                            <li>Batch transfer gaji</li>
-                            <li>Dashboard Finance</li>
-                            <li>Manajemen tim & undangan</li>
-                            <li>Audit log aktivitas</li>
-                        </ul>
-                        <a class="plan-cta white" href="/register">Mulai Sekarang</a>
-                    </div>
-
-                    <!-- Premium -->
-                    <div class="plan-card dark reveal">
-                        <span class="plan-badge premium">Korporat</span>
-                        <div class="plan-name">Premium</div>
-                        <div class="plan-price">Rp 4,9<span style="font-size:18px; font-weight:500;">jt</span></div>
-                        <div class="plan-cycle">per bulan, tagihan bulanan</div>
-                        <hr class="plan-divider">
-                        <ul class="plan-features">
-                            <li>Semua fitur Standard</li>
-                            <li>Multi perusahaan</li>
-                            <li>Laporan & analitik lanjutan</li>
-                            <li>Export file transfer bank</li>
-                            <li>Pengaturan komponen gaji</li>
-                            <li>Onboarding perusahaan</li>
-                            <li>Prioritas dukungan</li>
-                            <li>SLA & dedicated support</li>
-                        </ul>
-                        <a class="plan-cta ghost" href="/register">Hubungi Kami</a>
-                    </div>
-
-                </div>
-            </div>
-        </section>
 
         <section id="cara-kerja" class="landing-section reveal">
             <div class="container section-split section-split-reverse">

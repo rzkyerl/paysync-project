@@ -128,7 +128,7 @@
                                 required
                             >
                                 <option value="" disabled {{ old('company_size') ? '' : 'selected' }}>Pilih jumlah karyawan</option>
-                                @foreach (['1–20', '21–50', '51–100', '101–500', '> 500'] as $size)
+                                @foreach (['1-20', '21-50', '51-100', '101-500', '> 500'] as $size)
                                     <option value="{{ $size }}" {{ old('company_size') === $size ? 'selected' : '' }}>{{ $size }}</option>
                                 @endforeach
                             </select>

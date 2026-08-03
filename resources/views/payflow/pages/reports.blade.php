@@ -13,7 +13,7 @@
     // Filtered items based on active payroll + search params
     $allActiveItems = $activePayroll ? $activePayroll->payrollItems : collect();
 
-    // Client-side search is handled by Alpine — pass full dataset
+    // Client-side search is handled by Alpine â€” pass full dataset
     $searchQuery    = request('rpt_search', '');
     $anomalyFilter  = request('rpt_anomaly', '');
 
@@ -37,16 +37,16 @@
     $sorted            = $reportPayrolls->sortBy('period')->values();
     $trendPayrolls     = $sorted->slice(max(0, $sorted->count() - 6))->values();
 
-    function fmtRpt(float $v): string {
+    $fmtRpt = function(float $v): string {
         if ($v >= 1_000_000_000) return 'Rp ' . number_format($v / 1_000_000_000, 2, ',', '.') . ' M';
         if ($v >= 1_000_000)     return 'Rp ' . number_format($v / 1_000_000, 2, ',', '.') . ' Jt';
         return 'Rp ' . number_format($v, 0, ',', '.');
     }
 @endphp
 
-{{-- ═══════════════════════════════════════════════════════════════
-     SECTION 1 — Summary KPI Strip
-═══════════════════════════════════════════════════════════════ --}}
+{{-- â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*
+     SECTION 1 â€” Summary KPI Strip
+â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â* --}}
 <div class="grid grid-4" style="margin-bottom:20px;">
     <div class="kpi-modern">
         <div class="kpi-icon-wrap blue">
@@ -61,7 +61,7 @@
             <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
         </div>
         <div class="kpi-label">Total Gross Pay</div>
-        <div class="kpi-value" style="font-size:20px;">{{ fmtRpt((float)$totalGross) }}</div>
+        <div class="kpi-value" style="font-size:20px;">{{ $fmtRpt((float)$totalGross) }}</div>
         <div class="kpi-footer"><span class="badge badge-amber">Semua periode</span></div>
     </div>
     <div class="kpi-modern">
@@ -69,7 +69,7 @@
             <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
         </div>
         <div class="kpi-label">Total Deduction</div>
-        <div class="kpi-value" style="font-size:20px;">{{ fmtRpt((float)$totalDeduction) }}</div>
+        <div class="kpi-value" style="font-size:20px;">{{ $fmtRpt((float)$totalDeduction) }}</div>
         <div class="kpi-footer"><span class="badge badge-red">BPJS + PPh21</span></div>
     </div>
     <div class="kpi-modern">
@@ -77,14 +77,14 @@
             <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
         <div class="kpi-label">Total Net Pay</div>
-        <div class="kpi-value" style="font-size:20px;">{{ fmtRpt((float)$totalNet) }}</div>
+        <div class="kpi-value" style="font-size:20px;">{{ $fmtRpt((float)$totalNet) }}</div>
         <div class="kpi-footer"><span class="badge badge-green">Take-home semua</span></div>
     </div>
 </div>
 
-{{-- ═══════════════════════════════════════════════════════════════
-     SECTION 2 — Trend Chart + Quick Links (2-col)
-═══════════════════════════════════════════════════════════════ --}}
+{{-- â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*
+     SECTION 2 â€” Trend Chart + Quick Links (2-col)
+â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â* --}}
 <div class="grid grid-2" style="margin-bottom:20px; grid-template-columns: 1.6fr 1fr;">
 
     {{-- Trend Chart --}}
@@ -201,9 +201,9 @@
     </div>
 </div>
 
-{{-- ═══════════════════════════════════════════════════════════════
-     SECTION 3 — Payroll Report Detail Table
-═══════════════════════════════════════════════════════════════ --}}
+{{-- â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*
+     SECTION 3 â€” Payroll Report Detail Table
+â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â* --}}
 <div class="section-card">
 
     {{-- Card Header with period selector + filters + export --}}
@@ -212,11 +212,11 @@
             <div style="font-size:16px; font-weight:700; color:var(--navy);">Payroll Report</div>
             <div class="muted" style="font-size:13px; margin-top:2px;">
                 Rincian per karyawan
-                @if($activePayroll) · {{ $activePayroll->period_label }} @endif
+                @if($activePayroll) Â· {{ $activePayroll->period_label }} @endif
                 @if($filteredItems->count() !== $allActiveItems->count())
-                    · <span style="color:var(--brand); font-weight:700;">{{ $filteredItems->count() }} dari {{ $allActiveItems->count() }}</span> karyawan
+                    Â· <span style="color:var(--brand); font-weight:700;">{{ $filteredItems->count() }} dari {{ $allActiveItems->count() }}</span> karyawan
                 @else
-                    · {{ $allActiveItems->count() }} karyawan
+                    Â· {{ $allActiveItems->count() }} karyawan
                 @endif
             </div>
         </div>
@@ -224,7 +224,7 @@
         <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-left:auto;">
             {{-- Period Selector --}}
             @if($reportPayrolls->isNotEmpty())
-            <form method="GET" action="{{ route('app', 'reports') }}" id="period-form" style="margin:0;">
+            <form method="GET" action="{{ route('app.reports') }}" id="period-form" style="margin:0;">
                 @if($searchQuery)<input type="hidden" name="rpt_search" value="{{ $searchQuery }}">@endif
                 @if($anomalyFilter)<input type="hidden" name="rpt_anomaly" value="{{ $anomalyFilter }}">@endif
                 <select name="report_period" class="input" style="max-width:190px; font-size:13px;" onchange="this.form.submit()">
@@ -239,7 +239,7 @@
 
             {{-- Export CSV Button --}}
             @if($activePayroll && $allActiveItems->isNotEmpty())
-            <a href="{{ route('app', 'reports') }}?report_period={{ $activePayroll->period }}&export=csv"
+            <a href="{{ route('app.reports') }}?report_period={{ $activePayroll->period }}&export=csv"
                class="btn btn-secondary" style="font-size:13px;"
                title="Export ke CSV">
                 <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 4v12"/><path d="m7 11 5 5 5-5"/><path d="M5 20h14"/></svg>
@@ -261,11 +261,11 @@
     @if($activePayroll)
     @php
         $statusBannerMap = [
-            'draft'            => ['bg'=>'#f8fafc', 'border'=>'var(--line)',    'color'=>'var(--muted)',  'label'=>'Draft — belum dikalkulasi'],
-            'needs_review'     => ['bg'=>'#fffbeb', 'border'=>'#fde68a',        'color'=>'#92400e',       'label'=>'Needs Review — menunggu acknowledgment anomali'],
-            'pending_approval' => ['bg'=>'#eff6ff', 'border'=>'#bfdbfe',        'color'=>'#1d4ed8',       'label'=>'Pending Approval — menunggu persetujuan Finance'],
-            'approved'         => ['bg'=>'#f0fdf4', 'border'=>'#bbf7d0',        'color'=>'#166534',       'label'=>'Approved — siap disbursement'],
-            'disbursed'        => ['bg'=>'#f0fdf4', 'border'=>'#bbf7d0',        'color'=>'#166534',       'label'=>'Disbursed — gaji sudah disalurkan'],
+            'draft'            => ['bg'=>'#f8fafc', 'border'=>'var(--line)',    'color'=>'var(--muted)',  'label'=>'Draft â€” belum dikalkulasi'],
+            'needs_review'     => ['bg'=>'#fffbeb', 'border'=>'#fde68a',        'color'=>'#92400e',       'label'=>'Needs Review â€” menunggu acknowledgment anomali'],
+            'pending_approval' => ['bg'=>'#eff6ff', 'border'=>'#bfdbfe',        'color'=>'#1d4ed8',       'label'=>'Pending Approval â€” menunggu persetujuan Finance'],
+            'approved'         => ['bg'=>'#f0fdf4', 'border'=>'#bbf7d0',        'color'=>'#166534',       'label'=>'Approved â€” siap disbursement'],
+            'disbursed'        => ['bg'=>'#f0fdf4', 'border'=>'#bbf7d0',        'color'=>'#166534',       'label'=>'Disbursed â€” gaji sudah disalurkan'],
         ];
         $banner = $statusBannerMap[$activePayroll->status] ?? null;
     @endphp
@@ -274,7 +274,7 @@
         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         <strong>Status:</strong> {{ $banner['label'] }}
         @if($activePayroll->anomaly_count > 0)
-            · <span style="color:var(--red); font-weight:700;">{{ $activePayroll->anomaly_count }} anomali belum di-acknowledge</span>
+            Â· <span style="color:var(--red); font-weight:700;">{{ $activePayroll->anomaly_count }} anomali belum di-acknowledge</span>
         @endif
     </div>
     @endif
@@ -282,7 +282,7 @@
 
     {{-- Filter Bar --}}
     <div style="padding:14px 20px; border-bottom:1px solid var(--line); display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-        <form method="GET" action="{{ route('app', 'reports') }}" id="filter-form" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; flex:1;">
+        <form method="GET" action="{{ route('app.reports') }}" id="filter-form" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; flex:1;">
             <input type="hidden" name="report_period" value="{{ $activePayroll?->period ?? '' }}">
 
             {{-- Search --}}
@@ -298,13 +298,13 @@
             {{-- Anomaly Filter --}}
             <select class="input" name="rpt_anomaly" style="max-width:160px; font-size:13px;" onchange="this.form.submit()">
                 <option value="">Semua Status</option>
-                <option value="clean"   {{ $anomalyFilter === 'clean'   ? 'selected' : '' }}>✓ Bersih</option>
-                <option value="anomaly" {{ $anomalyFilter === 'anomaly' ? 'selected' : '' }}>⚠ Ada Anomali</option>
+                <option value="clean"   {{ $anomalyFilter === 'clean'   ? 'selected' : '' }}>âœ“ Bersih</option>
+                <option value="anomaly" {{ $anomalyFilter === 'anomaly' ? 'selected' : '' }}>âš  Ada Anomali</option>
             </select>
 
             {{-- Reset --}}
             @if($searchQuery || $anomalyFilter)
-            <a href="{{ route('app', 'reports') }}?report_period={{ $activePayroll?->period }}" class="btn btn-secondary" style="font-size:13px;">Reset</a>
+            <a href="{{ route('app.reports') }}?report_period={{ $activePayroll?->period }}" class="btn btn-secondary" style="font-size:13px;">Reset</a>
             @endif
         </form>
 
@@ -373,7 +373,7 @@
                                 </span>
                                 @endforeach
                                 @if($item->anomaly_acknowledged)
-                                <span style="font-size:10px; font-weight:700; padding:2px 6px; border-radius:4px; background:#dcfce7; color:#166534; border:1px solid #bbf7d0;">✓ Acknowledged</span>
+                                <span style="font-size:10px; font-weight:700; padding:2px 6px; border-radius:4px; background:#dcfce7; color:#166534; border:1px solid #bbf7d0;">âœ“ Acknowledged</span>
                                 @endif
                             </div>
                             @endif
@@ -384,7 +384,7 @@
                             @if((float)$item->overtime_pay > 0)
                                 <span style="color:var(--brand); font-weight:600;">Rp {{ number_format((float)$item->overtime_pay, 0, ',', '.') }}</span>
                             @else
-                                <span class="muted">—</span>
+                                <span class="muted">â€”</span>
                             @endif
                         </td>
                         <td style="text-align:right; font-size:13px; font-weight:600;">Rp {{ number_format((float)$item->gross_pay, 0, ',', '.') }}</td>
@@ -394,17 +394,17 @@
                             @if((float)$item->pph21_deduction > 0)
                                 Rp {{ number_format((float)$item->pph21_deduction, 0, ',', '.') }}
                             @else
-                                <span class="muted">—</span>
+                                <span class="muted">â€”</span>
                             @endif
                         </td>
                         <td style="text-align:right; font-weight:700; color:var(--navy);">Rp {{ number_format((float)$item->net_pay, 0, ',', '.') }}</td>
                         <td>
                             @if($item->has_anomaly && !$item->anomaly_acknowledged)
-                                <span class="badge badge-amber">⚠ Anomali</span>
+                                <span class="badge badge-amber">âš  Anomali</span>
                             @elseif($item->has_anomaly && $item->anomaly_acknowledged)
-                                <span class="badge badge-blue">⚠ Acknowledged</span>
+                                <span class="badge badge-blue">âš  Acknowledged</span>
                             @else
-                                <span class="badge badge-green">✓ OK</span>
+                                <span class="badge badge-green">âœ“ OK</span>
                             @endif
                         </td>
                         <td>
@@ -422,7 +422,7 @@
                         <td colspan="11" style="text-align:center; padding:40px 20px; color:var(--muted);">
                             @if($searchQuery || $anomalyFilter)
                                 Tidak ada karyawan sesuai filter.
-                                <a href="{{ route('app', 'reports') }}?report_period={{ $activePayroll?->period }}" style="color:var(--brand);">Reset filter</a>
+                                <a href="{{ route('app.reports') }}?report_period={{ $activePayroll?->period }}" style="color:var(--brand);">Reset filter</a>
                             @else
                                 Belum ada item payroll untuk periode ini.
                             @endif
@@ -452,9 +452,9 @@
     @endif
 </div>
 
-{{-- ═══════════════════════════════════════════════════════════════
-     SECTION 4 — Deduction Breakdown + Period History
-═══════════════════════════════════════════════════════════════ --}}
+{{-- â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*
+     SECTION 4 â€” Deduction Breakdown + Period History
+â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â*â* --}}
 @if($activePayroll && $allActiveItems->isNotEmpty())
 <div class="grid grid-2" style="margin-top:20px;">
 
@@ -480,7 +480,7 @@
             <div style="margin-bottom:14px;">
                 <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:13px;">
                     <span style="font-weight:600; color:var(--navy);">{{ $row['label'] }}</span>
-                    <span style="font-weight:700; color:{{ $row['color'] }};">{{ fmtRpt($row['value']) }}</span>
+                    <span style="font-weight:700; color:{{ $row['color'] }};">{{ $fmtRpt($row['value']) }}</span>
                 </div>
                 <div class="progress-modern-bar">
                     <span class="{{ $row['bar'] }}" style="width:{{ $grandDeduct > 0 ? round($row['value'] / $grandDeduct * 100, 1) : 0 }}%;"></span>
@@ -493,7 +493,7 @@
 
             <div style="padding:12px 14px; background:#fef2f2; border:1px solid #fecaca; border-radius:10px; display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
                 <span style="font-size:13px; font-weight:700; color:#991b1b;">Total Potongan</span>
-                <span style="font-size:15px; font-weight:800; color:#dc2626;">{{ fmtRpt($grandDeduct) }}</span>
+                <span style="font-size:15px; font-weight:800; color:#dc2626;">{{ $fmtRpt($grandDeduct) }}</span>
             </div>
         </div>
     </div>
@@ -533,7 +533,7 @@
                onmouseout="if(!{{ $isActive ? 'true' : 'false' }}) { this.style.background='#fff'; this.style.borderColor='var(--line)'; }">
                 <div style="flex:1; min-width:0;">
                     <div style="font-size:13px; font-weight:700; color:{{ $isActive ? 'var(--brand)' : 'var(--navy)' }};">{{ $p->period_label }}</div>
-                    <div class="muted" style="font-size:12px;">{{ $p->employee_count }} karyawan · Net {{ fmtRpt((float)$p->net_total) }}</div>
+                    <div class="muted" style="font-size:12px;">{{ $p->employee_count }} karyawan Â· Net {{ $fmtRpt((float)$p->net_total) }}</div>
                 </div>
                 <span class="badge {{ $pBadge }}" style="font-size:10px;">{{ $pLabel }}</span>
                 <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color:{{ $isActive ? 'var(--brand)' : 'var(--muted)' }}; flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg>
@@ -543,3 +543,4 @@
     </div>
 </div>
 @endif
+

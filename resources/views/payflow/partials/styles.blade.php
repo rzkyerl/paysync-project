@@ -441,7 +441,7 @@
         object-fit: contain;
     }
     .section-split-reverse {
-        /* figure is placed first in HTML, content second — natural order gives illustration left, content right */
+        /* figure is placed first in HTML, content second - natural order gives illustration left, content right */
     }
     .section-split .workflow-list {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1351,7 +1351,7 @@
     .sidebar.collapsed .brand { justify-content: center; }
     .sidebar.collapsed .sidebar-toggle { margin-inline: auto; }
 
-    /* Tooltip saat collapsed — pakai ::after pada nav-link */
+    /* Tooltip saat collapsed - pakai ::after pada nav-link */
     .sidebar.collapsed .nav-link {
         position: relative;
     }
@@ -1400,7 +1400,7 @@
         }
         .grid-4 { grid-template-columns: repeat(2, 1fr); }
         .grid-2 { grid-template-columns: 1fr; }
-        /* 17.5 — Touch target: ensure 44px minimum for all tappable elements */
+        /* 17.5 - Touch target: ensure 44px minimum for all tappable elements */
         button,
         a[href] {
             min-height: 44px;
@@ -1750,7 +1750,7 @@
     }
 
     /* ══════════════════════════════════════════════════════════════
-       MODERN TOPBAR — profile moved to navbar right side
+       MODERN TOPBAR - profile moved to navbar right side
     ══════════════════════════════════════════════════════════════ */
     .topbar {
         height: 64px;
@@ -2048,7 +2048,7 @@
     }
     .topbar-dropdown-footer:hover { background: var(--brand-soft); }
 
-    /* User profile button — simple: avatar + name + chevron */
+    /* User profile button - simple: avatar + name + chevron */
     .topbar-user-wrap { position: relative; }
     .topbar-user-btn {
         display: flex;

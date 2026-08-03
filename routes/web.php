@@ -56,11 +56,11 @@ Route::middleware('auth')->group(function () {
     Route::resource('employees', EmployeeController::class);
 
     // Payroll routes (hr_manager + finance_manager — role check in controller)
-    Route::get('/app/payroll', [PayrollController::class, 'index'])->name('payroll.index');
+    Route::get('/app/payroll', [PayrollController::class, 'index'])->middleware('role:super_admin,hr_manager,finance_manager')->name('payroll.index');
     Route::get('/app/payroll/create', [PayrollController::class, 'create'])->middleware('role:hr_manager')->name('payroll.create');
     Route::post('/app/payroll', [PayrollController::class, 'storeNew'])->middleware('role:hr_manager')->name('payroll.store');
-    Route::get('/app/payroll/attendance/template', [PayrollController::class, 'downloadAttendanceTemplate'])->name('payroll.attendance.template');
-    Route::get('/app/payroll/{payroll}', [PayrollController::class, 'show'])->name('payroll.show');
+    Route::get('/app/payroll/attendance/template', [PayrollController::class, 'downloadAttendanceTemplate'])->middleware('role:hr_manager')->name('payroll.attendance.template');
+    Route::get('/app/payroll/{payroll}', [PayrollController::class, 'show'])->middleware('role:super_admin,hr_manager,finance_manager')->name('payroll.show');
     Route::get('/app/payroll/{payroll}/attendance', [PayrollController::class, 'importAttendance'])->middleware('role:hr_manager')->name('payroll.attendance.import');
     Route::post('/app/payroll/{payroll}/attendance', [PayrollController::class, 'storeAttendance'])->middleware('role:hr_manager')->name('payroll.attendance.store');
     Route::post('/app/payroll/{payroll}/calculate', [PayrollController::class, 'calculate'])->middleware('role:hr_manager')->name('payroll.calculate');
@@ -70,9 +70,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/app/payroll/{payroll}/approve', [PayrollController::class, 'approve'])->middleware('role:finance_manager,super_admin')->name('payroll.approve');
     Route::post('/app/payroll/{payroll}/reject', [PayrollController::class, 'reject'])->middleware('role:finance_manager,super_admin')->name('payroll.reject');
     Route::post('/app/payroll/{payroll}/disburse', [PayrollController::class, 'disburse'])->middleware('role:finance_manager,super_admin')->name('payroll.disburse');
+    Route::post('/app/payroll/{payroll}/dispute', [PayrollController::class, 'dispute'])->middleware('role:finance_manager,super_admin')->name('payroll.dispute');
+    Route::post('/app/payroll/{payroll}/reprocess', [PayrollController::class, 'reprocess'])->middleware('role:hr_manager,finance_manager,super_admin')->name('payroll.reprocess');
     Route::get('/app/payroll/{payroll}/transfer-file', [PayrollController::class, 'downloadTransferFile'])->middleware('role:finance_manager,super_admin')->name('payroll.transfer-file');
-    Route::get('/app/payroll/{payroll}/reconcile', [PayrollController::class, 'reconcile'])->name('payroll.reconcile');
-    Route::get('/app/payroll/{payroll}/payslip/{employee}', [PayrollController::class, 'payslip'])->name('payroll.payslip');
+    Route::get('/app/payroll/{payroll}/reconcile', [PayrollController::class, 'reconcile'])->middleware('role:super_admin,finance_manager,hr_manager')->name('payroll.reconcile');
+    Route::get('/app/payroll/{payroll}/payslip/{employee}', [PayrollController::class, 'payslip'])->middleware('role:super_admin,hr_manager,finance_manager,employee')->name('payroll.payslip');
     Route::get('/app/my-payslips', [PayrollController::class, 'myPayslips'])->middleware('role:employee')->name('payroll.my-payslips');
 
     Route::middleware('role:super_admin')->prefix('/app/settings')->name('settings.')->group(function () {
@@ -94,8 +96,24 @@ Route::middleware('auth')->group(function () {
         ->middleware('role:hr_manager')
         ->name('employees.invite');
 
-    // Catch-all for remaining app pages (attendance, approval, payslips, disbursement,
-    // reconciliation, reports, settings, audit) — placed last so specific routes above take precedence
-    Route::get('/app/reports/{payroll}', [DashboardController::class, 'reportDetail'])->name('reports.detail');
-    Route::get('/app/{page?}', [DashboardController::class, 'show'])->name('app');
+    // Page-level authorization: each dashboard shell page is a dedicated route
+    // with role middleware so direct URL access cannot bypass authorization.
+    // NOTE: /app/settings and /app/employees are already covered by dedicated
+    // route groups above (SettingsController and EmployeeResource respectively).
+    Route::get('/app/attendance', [DashboardController::class, 'show'])
+        ->defaults('page', 'attendance')->middleware('role:super_admin,hr_manager')->name('app.attendance');
+    Route::get('/app/approval', [DashboardController::class, 'show'])
+        ->defaults('page', 'approval')->middleware('role:super_admin,finance_manager')->name('app.approval');
+    Route::get('/app/payslips', [DashboardController::class, 'show'])
+        ->defaults('page', 'payslips')->middleware('role:super_admin,hr_manager,finance_manager')->name('app.payslips');
+    Route::get('/app/disbursement', [DashboardController::class, 'show'])
+        ->defaults('page', 'disbursement')->middleware('role:super_admin,finance_manager')->name('app.disbursement');
+    Route::get('/app/reconciliation', [DashboardController::class, 'show'])
+        ->defaults('page', 'reconciliation')->middleware('role:super_admin,finance_manager')->name('app.reconciliation');
+    Route::get('/app/reports', [DashboardController::class, 'show'])
+        ->defaults('page', 'reports')->middleware('role:super_admin,hr_manager,finance_manager')->name('app.reports');
+    Route::get('/app/audit', [DashboardController::class, 'show'])
+        ->defaults('page', 'audit')->middleware('role:super_admin')->name('app.audit');
+
+    Route::get('/app/reports/{payroll}', [DashboardController::class, 'reportDetail'])->middleware('role:super_admin,hr_manager,finance_manager')->name('reports.detail');
 });

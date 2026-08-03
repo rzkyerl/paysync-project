@@ -74,7 +74,7 @@
                     @if($payroll->anomaly_count > 0)
                         <span class="badge badge-red">{{ $payroll->anomaly_count }} anomali</span>
                     @else
-                        <span class="badge badge-green">✓ Bersih</span>
+                        <span class="badge badge-green">[OK] Bersih</span>
                     @endif
                     <span class="badge badge-amber">Menunggu Approval</span>
                 </div>
@@ -102,7 +102,7 @@
                 {{-- Action Buttons --}}
                 @if($isSuperAdmin)
                     <div style="padding:12px 14px; background:#fffbeb; border:1px solid #fde68a; border-radius:10px; font-size:13px; color:#92400e;">
-                        Anda dalam Mode Pantau — aksi approval hanya tersedia untuk Finance Manager.
+                        Anda dalam Mode Pantau - aksi approval hanya tersedia untuk Finance Manager.
                     </div>
                 @else
                     <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">

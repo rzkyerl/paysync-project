@@ -9,7 +9,7 @@
     ];
 @endphp
 
-<form method="GET" action="{{ route('app', 'audit') }}" style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px; align-items:center;">
+<form method="GET" action="{{ route('app.audit') }}" style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px; align-items:center;">
     <select class="input" style="max-width:170px;" name="category">
         <option value="">Semua kategori</option>
         @foreach($categories as $value => $label)
@@ -22,7 +22,7 @@
     <input class="input" style="max-width:155px;" type="date" name="to" value="{{ request('to') }}" title="Sampai tanggal">
     <button type="submit" class="btn btn-secondary">Filter</button>
     @if(request('category') || request('actor') || request('event') || request('from') || request('to'))
-        <a href="{{ route('app', 'audit') }}" class="btn btn-secondary">Reset</a>
+        <a href="{{ route('app.audit') }}" class="btn btn-secondary">Reset</a>
     @endif
     <span class="muted" style="font-size:13px; margin-left:auto;">Read-only · Aktivitas penting perusahaan</span>
 </form>
@@ -79,7 +79,7 @@
                                     <div style="font-size:13px; color:var(--navy);">{{ $log->description }}</div>
                                     <div class="muted" style="font-family:monospace; font-size:11px; margin-top:3px;">{{ $log->event }}</div>
                                 </td>
-                                <td><span class="muted" style="font-family:monospace; font-size:12px;">{{ $log->ip_address ?? '—' }}</span></td>
+                                <td><span class="muted" style="font-family:monospace; font-size:12px;">{{ $log->ip_address ?? '-' }}</span></td>
                             </tr>
                         @endforeach
                     </tbody>

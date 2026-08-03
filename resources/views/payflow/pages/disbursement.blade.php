@@ -6,14 +6,14 @@
     $disbPendingAmount    = $disbPendingAmount ?? 0;
     $isSuperAdmin         = $isSuperAdminViewing ?? false;
 
-    function fmtJt(float $v): string {
+    $fmtJt = function(float $v): string {
         if ($v >= 1_000_000_000) return 'Rp ' . number_format($v / 1_000_000_000, 2, ',', '.') . ' M';
         if ($v >= 1_000_000)     return 'Rp ' . number_format($v / 1_000_000, 2, ',', '.') . ' Jt';
         return 'Rp ' . number_format($v, 0, ',', '.');
     }
 @endphp
 
-{{-- ═══ KPI Strip ═══ --}}
+{{-- *** KPI Strip *** --}}
 <div class="grid grid-4" style="margin-bottom:20px;">
     <div class="kpi-modern kpi-blue">
         <div class="kpi-icon-wrap blue">
@@ -40,7 +40,7 @@
             <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
         </div>
         <div class="kpi-label">Total Tersalurkan</div>
-        <div class="kpi-value" style="font-size:20px;">{{ fmtJt((float)$disbSuccessAmount) }}</div>
+        <div class="kpi-value" style="font-size:20px;">{{ $fmtJt((float)$disbSuccessAmount) }}</div>
         <div class="kpi-footer"><span class="badge badge-green">Disbursed</span></div>
     </div>
     <div class="kpi-modern kpi-amber">
@@ -48,7 +48,7 @@
             <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         </div>
         <div class="kpi-label">Pending Transfer</div>
-        <div class="kpi-value" style="font-size:20px;">{{ fmtJt((float)$disbPendingAmount) }}</div>
+        <div class="kpi-value" style="font-size:20px;">{{ $fmtJt((float)$disbPendingAmount) }}</div>
         <div class="kpi-footer">
             <span class="badge {{ $disbPendingAmount > 0 ? 'badge-amber' : 'badge-green' }}">
                 {{ $disbPendingAmount > 0 ? 'Belum disalurkan' : 'Bersih' }}
@@ -57,13 +57,13 @@
     </div>
 </div>
 
-{{-- ═══ Batch Table ═══ --}}
+{{-- *** Batch Table *** --}}
 <div class="section-card">
     <div class="section-header">
         <div>
             <div style="font-size:16px; font-weight:700; color:var(--navy);">Penyaluran Gaji</div>
             <div class="muted" style="font-size:13px; margin-top:2px;">
-                {{ $disbursementPayrolls->count() }} batch · payroll approved &amp; disbursed
+                {{ $disbursementPayrolls->count() }} batch  payroll approved &amp; disbursed
             </div>
         </div>
         @if(!$isSuperAdmin && $disbReadyCount > 0)
@@ -116,7 +116,7 @@
                                 @endif
                             </td>
                             <td style="text-align:right; font-weight:700; color:var(--navy);">
-                                {{ fmtJt((float)$payroll->net_total) }}
+                                {{ $fmtJt((float)$payroll->net_total) }}
                             </td>
                             <td>
                                 <span style="font-size:13px; color:var(--muted);">
@@ -130,7 +130,7 @@
                             </td>
                             <td>
                                 @if($isDone)
-                                    <span class="badge badge-green">✓ Disbursed</span>
+                                    <span class="badge badge-green">Disbursed</span>
                                 @else
                                     <span class="badge badge-blue">Siap Transfer</span>
                                 @endif
@@ -159,7 +159,7 @@
                                                     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;">
                                                         <div>
                                                             <div class="modal-title" style="margin:0;">Download File Transfer</div>
-                                                            <div class="muted" style="font-size:13px; margin-top:2px;">{{ $payroll->period_label }} · {{ $payroll->employee_count }} karyawan</div>
+                                                            <div class="muted" style="font-size:13px; margin-top:2px;">{{ $payroll->period_label }}  {{ $payroll->employee_count }} karyawan</div>
                                                         </div>
                                                         <button type="button" @click="dlOpen = false" style="width:32px;height:32px;border-radius:8px;border:1px solid var(--line);background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--muted);">
                                                             <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -175,7 +175,7 @@
                                                     <div style="display:grid; gap:8px; margin-bottom:20px;">
                                                         @foreach([
                                                             ['generic', 'Format Umum',  'Cocok untuk semua bank, berisi semua kolom lengkap',       '#6366f1'],
-                                                            ['bca',     'BCA',          'KlikBCA Bisnis — Bulk Transfer',                            '#0066cc'],
+                                                            ['bca',     'BCA',          'KlikBCA Bisnis  Bulk Transfer',                            '#0066cc'],
                                                             ['mandiri', 'Mandiri',      'Mandiri Cash Management (MCM)',                             '#003d7a'],
                                                             ['bni',     'BNI',          'BNI Direct Payroll',                                        '#e47900'],
                                                             ['bri',     'BRI',          'BRImo Business / BRI Payroll',                              '#006e36'],
@@ -197,7 +197,7 @@
                                                     </div>
 
                                                     <div style="font-size:12px; color:var(--muted); text-align:center;">
-                                                        File CSV · {{ $payroll->employee_count }} baris · Total {{ fmtJt((float)$payroll->net_total) }}
+                                                        File CSV  {{ $payroll->employee_count }} baris  Total {{ $fmtJt((float)$payroll->net_total) }}
                                                     </div>
                                                 </div>
                                             </div>
@@ -228,7 +228,7 @@
                                                     </div>
                                                     <p style="font-size:14px; color:var(--muted); margin:0 0 18px; line-height:1.65;">
                                                         Salurkan gaji <strong style="color:var(--navy);">{{ $payroll->period_label }}</strong> sebesar
-                                                        <strong style="color:var(--brand);">{{ fmtJt((float)$payroll->net_total) }}</strong>
+                                                        <strong style="color:var(--brand);">{{ $fmtJt((float)$payroll->net_total) }}</strong>
                                                         untuk <strong style="color:var(--navy);">{{ $payroll->employee_count }} karyawan</strong>?
                                                     </p>
                                                     <form method="POST" action="{{ route('payroll.disburse', $payroll) }}" enctype="multipart/form-data">
@@ -266,3 +266,4 @@
         </div>
     @endif
 </div>
+

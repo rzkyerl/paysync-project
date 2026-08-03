@@ -8,6 +8,20 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Payroll extends Model
 {
+    protected static function booted(): void
+    {
+        // Apply a global tenant scope so that non-super-admin users can never
+        // query payrolls outside their company, even if a controller forgets to
+        // add an explicit where('company_id', ...). Super admins bypass this
+        // scope so they can oversee all companies when needed.
+        static::addGlobalScope('company', function ($query) {
+            $user = app('auth')->guard()->user();
+
+            if ($user && $user->company_id !== null && ! $user->isSuperAdmin()) {
+                $query->where('company_id', $user->company_id);
+            }
+        });
+    }
     /**
      * The attributes that are mass assignable.
      *
@@ -30,6 +44,9 @@ class Payroll extends Model
         'disbursed_at',
         'disbursement_proof',
         'disbursed_by',
+        'dispute_reason',
+        'disputed_by',
+        'reprocessed_by',
     ];
 
     /**
@@ -91,7 +108,8 @@ class Payroll extends Model
             'needs_review' => ['pending_approval'],
             'pending_approval' => ['approved', 'needs_review'],
             'approved' => ['disbursed'],
-            'disbursed' => [],
+            'disbursed' => ['disputed'],
+            'disputed' => ['approved'],
         ];
 
         return in_array($status, $transitions[$this->status] ?? [], true);
@@ -107,7 +125,7 @@ class Payroll extends Model
         }
 
         $attributes = ['status' => $status];
-        foreach (['submitted_by', 'approved_by', 'approved_at', 'disbursed_by', 'disbursed_at', 'rejection_note'] as $field) {
+        foreach (['submitted_by', 'approved_by', 'approved_at', 'disbursed_by', 'disbursed_at', 'rejection_note', 'dispute_reason', 'disputed_by', 'reprocessed_by'] as $field) {
             if (array_key_exists($field, $meta)) {
                 $attributes[$field] = $meta[$field];
             }

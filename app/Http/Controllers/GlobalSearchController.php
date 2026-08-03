@@ -30,10 +30,11 @@ class GlobalSearchController extends Controller
             ['slug' => 'dashboard-finance',  'label' => 'Dashboard Finance',       'roles' => ['super_admin', 'finance_manager']],
             ['slug' => 'dashboard-employee', 'label' => 'Dashboard Employee',      'roles' => ['super_admin', 'employee']],
             ['slug' => 'employees',          'label' => 'Daftar Karyawan',         'roles' => ['super_admin', 'hr_manager', 'finance_manager']],
-            ['slug' => 'attendance',         'label' => 'Kehadiran',               'roles' => ['super_admin', 'hr_manager', 'employee']],
+            ['slug' => 'attendance',         'label' => 'Kehadiran',               'roles' => ['super_admin', 'hr_manager']],
             ['slug' => 'payroll',            'label' => 'Proses Payroll',          'roles' => ['super_admin', 'hr_manager']],
             ['slug' => 'approval',           'label' => 'Approval Queue',          'roles' => ['super_admin', 'finance_manager']],
-            ['slug' => 'payslips',           'label' => 'Slip Gaji Digital',       'roles' => ['super_admin', 'hr_manager', 'finance_manager', 'employee']],
+            ['slug' => 'payslips',           'label' => 'Slip Gaji Digital',       'roles' => ['super_admin', 'hr_manager', 'finance_manager']],
+            ['slug' => 'my-payslips',        'label' => 'Slip Gaji Saya',          'roles' => ['employee']],
             ['slug' => 'disbursement',       'label' => 'Batch Transfer',          'roles' => ['super_admin', 'finance_manager']],
             ['slug' => 'reconciliation',     'label' => 'Rekonsiliasi',            'roles' => ['super_admin', 'finance_manager']],
             ['slug' => 'reports',            'label' => 'Reports Hub',             'roles' => ['super_admin', 'hr_manager', 'finance_manager']],
@@ -43,8 +44,9 @@ class GlobalSearchController extends Controller
         ];
 
         $moduleUrls = [
-            'employees' => route('employees.index'),
-            'payroll'   => route('payroll.index'),
+            'employees'   => route('employees.index'),
+            'payroll'     => route('payroll.index'),
+            'my-payslips' => route('payroll.my-payslips'),
         ];
 
         $modules = [];
@@ -69,7 +71,7 @@ class GlobalSearchController extends Controller
             $rows = Employee::query()
                 ->when($companyId, fn ($q) => $q->where('company_id', $companyId))
                 ->when(! $companyId, fn ($q) => $q->whereNull('company_id'))
-                ->where(fn ($q) => $q
+                ->where(fn ($query) => $query
                     ->where('name', 'like', "%{$q}%")
                     ->orWhere('nip',  'like', "%{$q}%")
                 )

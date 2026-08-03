@@ -3,10 +3,10 @@
     Renders a sortable column header link inside a <th>.
 
     Variables:
-      $column      — the column key to sort by (e.g. 'name')
-      $label       — display text (e.g. 'Nama')
-      $currentSort — currently active sort column (e.g. $sortBy from controller)
-      $currentDir  — current sort direction: 'asc' or 'desc' (e.g. $sortDir from controller)
+      $column      - the column key to sort by (e.g. 'name')
+      $label       - display text (e.g. 'Nama')
+      $currentSort - currently active sort column (e.g. $sortBy from controller)
+      $currentDir  - current sort direction: 'asc' or 'desc' (e.g. $sortDir from controller)
 
     Click behaviour (3-state cycle):
       1st click (column inactive)      → sort ASC

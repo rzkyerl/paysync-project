@@ -23,7 +23,7 @@
     $grossPay       = array_sum($earnings);
     $totalDeduction = array_sum($deductions);
     $bankDisplay    = $employee->bank_name
-        ? $employee->bank_name . ' •••• ' . substr($employee->bank_account_number ?? '????', -4)
+        ? $employee->bank_name . ' **** ' . substr($employee->bank_account_number ?? '????', -4)
         : '-';
 @endphp
 <!doctype html>
@@ -31,7 +31,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Slip Gaji – {{ $employee->name }} – {{ $payroll->period_label }}</title>
+    <title>Slip Gaji - {{ $employee->name }} - {{ $payroll->period_label }}</title>
     @include('payflow.partials.styles')
     <style>
         @media print {
@@ -167,7 +167,7 @@
         <span style="font-size:14px; color:var(--muted);">Slip Gaji · {{ $payroll->period_label }}</span>
     </div>
     <div style="display:flex; gap:8px;">
-        @php $backUrl = $user->isEmployee() ? route('payroll.my-payslips') : route('app', ['page' => 'payslips']); @endphp
+        @php $backUrl = $user->isEmployee() ? route('payroll.my-payslips') : route('app.payslips'); @endphp
         <a href="{{ $backUrl }}" class="btn btn-secondary no-print">
             <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
             Kembali

@@ -22,7 +22,7 @@
 
     $grandDeduct = $breakdown['deduction'];
 
-    function fmtDt(float $v): string {
+    $fmtDt = function(float $v): string {
         if ($v >= 1_000_000_000) return 'Rp '.number_format($v/1_000_000_000,2,',','.').' M';
         if ($v >= 1_000_000)     return 'Rp '.number_format($v/1_000_000,2,',','.').' Jt';
         return 'Rp '.number_format($v,0,',','.');
@@ -33,7 +33,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Report {{ $payroll->period_label }} — PaySync</title>
+    <title>Report {{ $payroll->period_label }} â€” PaySync</title>
     @include('payflow.partials.styles')
     <style>
         .rpt-nav-btn {
@@ -50,7 +50,7 @@
 </head>
 <body>
 
-{{-- ── App Shell (sidebar + topbar, same as app.blade.php) ── --}}
+{{-- â”€â”€ App Shell (sidebar + topbar, same as app.blade.php) â”€â”€ --}}
 @php
     $role = $user->role;
     $canSeeHr      = in_array($role, ['super_admin', 'hr_manager'], true);
@@ -136,22 +136,22 @@
 
         <section class="content">
 
-            {{-- ── Page Head ── --}}
+            {{-- â”€â”€ Page Head â”€â”€ --}}
             <div class="page-head">
                 <div>
-                    <h1>Payroll Report — {{ $payroll->period_label }}</h1>
+                    <h1>Payroll Report â€” {{ $payroll->period_label }}</h1>
                     <div style="display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap;">
                         <span class="badge {{ $si['badge'] }}">{{ $si['label'] }}</span>
                         @if($payroll->submitter)
                             <span class="muted" style="font-size:12px;">Disubmit: <strong>{{ $payroll->submitter->name }}</strong></span>
                         @endif
                         @if($payroll->approver)
-                            <span class="muted" style="font-size:12px;">· Disetujui: <strong>{{ $payroll->approver->name }}</strong>
+                            <span class="muted" style="font-size:12px;">Â· Disetujui: <strong>{{ $payroll->approver->name }}</strong>
                                 @if($payroll->approved_at) ({{ $payroll->approved_at->format('d M Y') }}) @endif
                             </span>
                         @endif
                         @if($payroll->disbursed_at)
-                            <span class="muted" style="font-size:12px;">· Disbursed: <strong>{{ $payroll->disbursed_at->format('d M Y') }}</strong></span>
+                            <span class="muted" style="font-size:12px;">Â· Disbursed: <strong>{{ $payroll->disbursed_at->format('d M Y') }}</strong></span>
                         @endif
                     </div>
                 </div>
@@ -188,7 +188,7 @@
             </div>
             @endif
 
-            {{-- ── KPI Strip ── --}}
+            {{-- â”€â”€ KPI Strip â”€â”€ --}}
             <div class="grid grid-4" style="margin-bottom:20px;">
                 <div class="kpi-modern">
                     <div class="kpi-icon-wrap blue"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
@@ -199,28 +199,28 @@
                 <div class="kpi-modern">
                     <div class="kpi-icon-wrap amber"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
                     <div class="kpi-label">Gross Pay</div>
-                    <div class="kpi-value" style="font-size:20px;">{{ fmtDt((float)$payroll->gross_total) }}</div>
+                    <div class="kpi-value" style="font-size:20px;">{{ $fmtDt((float)$payroll->gross_total) }}</div>
                     <div class="kpi-footer"><span class="badge badge-amber">Sebelum potongan</span></div>
                 </div>
                 <div class="kpi-modern">
                     <div class="kpi-icon-wrap red"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div>
                     <div class="kpi-label">Total Deduction</div>
-                    <div class="kpi-value" style="font-size:20px;">{{ fmtDt((float)$payroll->deduction_total) }}</div>
+                    <div class="kpi-value" style="font-size:20px;">{{ $fmtDt((float)$payroll->deduction_total) }}</div>
                     <div class="kpi-footer"><span class="badge badge-red">BPJS + PPh21</span></div>
                 </div>
                 <div class="kpi-modern">
                     <div class="kpi-icon-wrap green"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
                     <div class="kpi-label">Net Pay</div>
-                    <div class="kpi-value" style="font-size:20px;">{{ fmtDt((float)$payroll->net_total) }}</div>
+                    <div class="kpi-value" style="font-size:20px;">{{ $fmtDt((float)$payroll->net_total) }}</div>
                     <div class="kpi-footer">
                         <span class="badge {{ $payroll->anomaly_count > 0 ? 'badge-red' : 'badge-green' }}">
-                            {{ $payroll->anomaly_count > 0 ? $payroll->anomaly_count.' anomali' : '✓ Bersih' }}
+                            {{ $payroll->anomaly_count > 0 ? $payroll->anomaly_count.' anomali' : 'âœ“ Bersih' }}
                         </span>
                     </div>
                 </div>
             </div>
 
-            {{-- ── Breakdown + Period List (2-col) ── --}}
+            {{-- â”€â”€ Breakdown + Period List (2-col) â”€â”€ --}}
             <div class="grid grid-2" style="margin-bottom:20px;">
 
                 {{-- Deduction Breakdown --}}
@@ -238,7 +238,7 @@
                         <div style="margin-bottom:14px;">
                             <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;">
                                 <span style="font-weight:600;color:var(--navy);">{{ $label }}</span>
-                                <span style="font-weight:700;color:var(--navy);">{{ fmtDt($val) }}</span>
+                                <span style="font-weight:700;color:var(--navy);">{{ $fmtDt($val) }}</span>
                             </div>
                             <div class="breakdown-bar">
                                 <span style="width:{{ $grandDeduct > 0 ? round($val/$grandDeduct*100,1) : 0 }}%;background:{{ $grad }};"></span>
@@ -251,12 +251,12 @@
                         @if($breakdown['overtime'] > 0)
                         <div style="padding:10px 12px;background:var(--brand-soft);border:1px solid var(--brand-line);border-radius:9px;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
                             <span style="font-size:13px;font-weight:600;color:var(--brand);">Total Lembur</span>
-                            <span style="font-size:14px;font-weight:800;color:var(--brand);">+ {{ fmtDt($breakdown['overtime']) }}</span>
+                            <span style="font-size:14px;font-weight:800;color:var(--brand);">+ {{ $fmtDt($breakdown['overtime']) }}</span>
                         </div>
                         @endif
                         <div style="padding:12px 14px;background:#fef2f2;border:1px solid #fecaca;border-radius:9px;display:flex;justify-content:space-between;align-items:center;">
                             <span style="font-size:13px;font-weight:700;color:#991b1b;">Total Potongan</span>
-                            <span style="font-size:15px;font-weight:800;color:#dc2626;">{{ fmtDt($grandDeduct) }}</span>
+                            <span style="font-size:15px;font-weight:800;color:#dc2626;">{{ $fmtDt($grandDeduct) }}</span>
                         </div>
                     </div>
                 </div>
@@ -288,7 +288,7 @@
                             @endif
                             <div style="flex:1;min-width:0;">
                                 <div style="font-size:13px;font-weight:700;color:{{ $isActive?'var(--brand)':'var(--navy)' }};">{{ $p->period_label }}</div>
-                                <div class="muted" style="font-size:11px;">{{ $p->employee_count }} karyawan · {{ fmtDt((float)$p->net_total) }}</div>
+                                <div class="muted" style="font-size:11px;">{{ $p->employee_count }} karyawan Â· {{ $fmtDt((float)$p->net_total) }}</div>
                             </div>
                             <span class="badge {{ $pBadge }}" style="font-size:10px;">{{ $pLabel }}</span>
                         </a>
@@ -297,15 +297,15 @@
                 </div>
             </div>
 
-            {{-- ── Payroll Items Table ── --}}
+            {{-- â”€â”€ Payroll Items Table â”€â”€ --}}
             <div class="section-card">
                 <div class="section-header" style="flex-wrap:wrap;gap:12px;">
                     <div>
                         <div style="font-size:16px;font-weight:700;color:var(--navy);">Rincian per Karyawan</div>
                         <div class="muted" style="font-size:13px;margin-top:2px;">
-                            {{ $payroll->payrollItems->count() }} karyawan ·
+                            {{ $payroll->payrollItems->count() }} karyawan Â·
                             <span class="{{ $payroll->anomaly_count > 0 ? '' : '' }}" style="color:{{ $payroll->anomaly_count > 0 ? 'var(--red)' : 'var(--green)' }};font-weight:700;">
-                                {{ $payroll->anomaly_count > 0 ? $payroll->anomaly_count.' anomali' : '✓ Semua bersih' }}
+                                {{ $payroll->anomaly_count > 0 ? $payroll->anomaly_count.' anomali' : 'âœ“ Semua bersih' }}
                             </span>
                         </div>
                     </div>
@@ -356,7 +356,7 @@
                                         <span style="font-size:10px;font-weight:700;padding:2px 5px;border-radius:4px;background:#fef3c7;color:#92400e;border:1px solid #fde68a;">{{ $anomalyLabels[$t] ?? $t }}</span>
                                         @endforeach
                                         @if($item->anomaly_acknowledged)
-                                        <span style="font-size:10px;font-weight:700;padding:2px 5px;border-radius:4px;background:#dcfce7;color:#166534;border:1px solid #bbf7d0;">✓ Ack</span>
+                                        <span style="font-size:10px;font-weight:700;padding:2px 5px;border-radius:4px;background:#dcfce7;color:#166534;border:1px solid #bbf7d0;">âœ“ Ack</span>
                                         @endif
                                     </div>
                                     @endif
@@ -366,23 +366,23 @@
                                 <td style="text-align:right;font-size:13px;">
                                     @if((float)$item->overtime_pay > 0)
                                         <span style="color:var(--brand);font-weight:600;">Rp {{ number_format((float)$item->overtime_pay,0,',','.') }}</span>
-                                    @else <span class="muted">—</span> @endif
+                                    @else <span class="muted">â€”</span> @endif
                                 </td>
                                 <td style="text-align:right;font-size:13px;font-weight:600;">Rp {{ number_format((float)$item->gross_pay,0,',','.') }}</td>
                                 <td style="text-align:right;font-size:12px;color:#b45309;">Rp {{ number_format((float)$item->bpjs_tk_deduction,0,',','.') }}</td>
                                 <td style="text-align:right;font-size:12px;color:#b45309;">Rp {{ number_format((float)$item->bpjs_kesehatan_deduction,0,',','.') }}</td>
                                 <td style="text-align:right;font-size:12px;color:#b45309;">
                                     @if((float)$item->pph21_deduction > 0) Rp {{ number_format((float)$item->pph21_deduction,0,',','.') }}
-                                    @else <span class="muted">—</span> @endif
+                                    @else <span class="muted">â€”</span> @endif
                                 </td>
                                 <td style="text-align:right;font-weight:700;color:var(--navy);">Rp {{ number_format((float)$item->net_pay,0,',','.') }}</td>
                                 <td>
                                     @if($item->has_anomaly && !$item->anomaly_acknowledged)
-                                        <span class="badge badge-amber">⚠ Anomali</span>
+                                        <span class="badge badge-amber">âš  Anomali</span>
                                     @elseif($item->has_anomaly)
-                                        <span class="badge badge-blue">⚠ Ack</span>
+                                        <span class="badge badge-blue">âš  Ack</span>
                                     @else
-                                        <span class="badge badge-green">✓ OK</span>
+                                        <span class="badge badge-green">âœ“ OK</span>
                                     @endif
                                 </td>
                                 @if(!$isSuperAdmin && in_array($payroll->status,['approved','disbursed']))
@@ -451,3 +451,4 @@
 <script defer src="{{ asset('vendor/alpinejs/cdn.min.js') }}"></script>
 </body>
 </html>
+

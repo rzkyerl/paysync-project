@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use App\Models\Employee;
+use App\Models\Payroll;
 use App\Policies\EmployeePolicy;
+use App\Policies\PayrollPolicy;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -25,6 +27,7 @@ class AppServiceProvider extends ServiceProvider
     {
         // Register policies (Laravel 11 style — no AuthServiceProvider needed)
         Gate::policy(Employee::class, EmployeePolicy::class);
+        Gate::policy(Payroll::class, PayrollPolicy::class);
 
         View::composer('payflow.app', function ($view): void {
             $user = auth()->user();

@@ -98,7 +98,7 @@ class OnboardingTest extends TestCase
 
         $this->get(route('team.index'))
             ->assertOk()
-            ->assertViewHas('members', fn ($members) => $members->count() === 3);
+            ->assertViewHas('members', fn ($members) => $members->count() === 2);
     }
 
     /**

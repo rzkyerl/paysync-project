@@ -7,7 +7,7 @@
         'payroll_cut_off' => (int) old('payroll_cut_off', 25),
         'pay_date'        => (int) old('pay_date', 30),
     ];
-    $companySizes = ['1–20', '21–50', '51–100', '101–500', '> 500'];
+    $companySizes = ['1-20', '21-50', '51-100', '101-500', '> 500'];
     $restoreStep = 1;
     if ($errors->hasAny(['size']))                        $restoreStep = 2;
     if ($errors->hasAny(['payroll_cut_off', 'pay_date'])) $restoreStep = 3;
@@ -17,7 +17,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Setup Workspace — PaySync</title>
+    <title>Setup Workspace - PaySync</title>
     @include('payflow.partials.styles')
     <style>
         [x-cloak] { display: none !important; }
@@ -427,7 +427,7 @@
                                     <div style="font-size:13px; font-weight:600; color:var(--navy);">
                                         Tanggal <span x-text="formData.payroll_cut_off"></span> setiap bulan
                                     </div>
-                                    <div class="muted" style="font-size:12px;">Antara tanggal 1–28</div>
+                                    <div class="muted" style="font-size:12px;">Antara tanggal 1-28</div>
                                 </div>
                             </div>
                             <span class="field-error" x-show="errors.payroll_cut_off" x-text="errors.payroll_cut_off" x-cloak role="alert"></span>
@@ -452,7 +452,7 @@
                                     <div style="font-size:13px; font-weight:600; color:var(--navy);">
                                         Tanggal <span x-text="formData.pay_date"></span> setiap bulan
                                     </div>
-                                    <div class="muted" style="font-size:12px;">Antara tanggal 1–31</div>
+                                    <div class="muted" style="font-size:12px;">Antara tanggal 1-31</div>
                                 </div>
                             </div>
                             <span class="field-error" x-show="errors.pay_date" x-text="errors.pay_date" x-cloak role="alert"></span>
@@ -465,11 +465,11 @@
                             <div style="display:grid; gap:6px; font-size:13px; color:var(--navy);">
                                 <div style="display:flex; justify-content:space-between;">
                                     <span class="muted">Nama perusahaan</span>
-                                    <strong x-text="formData.name || '—'"></strong>
+                                    <strong x-text="formData.name || '-'"></strong>
                                 </div>
                                 <div style="display:flex; justify-content:space-between;">
                                     <span class="muted">Ukuran</span>
-                                    <strong x-text="formData.size || '—'"></strong>
+                                    <strong x-text="formData.size || '-'"></strong>
                                 </div>
                                 <div style="display:flex; justify-content:space-between;">
                                     <span class="muted">Cut-off</span>

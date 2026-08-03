@@ -115,7 +115,7 @@
                         @if($reconciliation['has_mismatch'])
                             <div class="muted" style="font-size:12px; margin-top:2px;">Mismatch {{ $reconciliation['mismatch_label'] }}</div>
                         @else
-                            <div style="font-size:12px; color:var(--green); font-weight:600; margin-top:2px;">✓ Tidak ada selisih</div>
+                            <div style="font-size:12px; color:var(--green); font-weight:600; margin-top:2px;">[OK] Tidak ada selisih</div>
                         @endif
                     </div>
                     <a href="/app/reconciliation" class="btn btn-primary" style="padding:8px 14px; font-size:13px; flex-shrink:0;">

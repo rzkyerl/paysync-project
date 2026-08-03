@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Slip Gaji Saya – PaySync</title>
+    <title>Slip Gaji Saya - PaySync</title>
     @include('payflow.partials.styles')
 </head>
 <body>
@@ -55,7 +55,7 @@
                                 </td>
                                 <td>
                                     @if($item->status === 'transferred')
-                                        <span class="badge badge-green">✓ Transferred</span>
+                                        <span class="badge badge-green">[OK] Transferred</span>
                                     @elseif($item->payroll->status === 'approved')
                                         <span class="badge badge-blue">Disetujui</span>
                                     @else
