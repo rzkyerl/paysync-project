@@ -30,7 +30,7 @@ class TeamController extends Controller
             'members' => User::query()
                 ->where('company_id', $user->company_id)
                 ->where('id', '!=', $user->getKey())
-                ->whereIn('role', ['super_admin', 'hr_manager', 'finance_manager'])
+                ->whereIn('role', ['super_admin', 'hr_manager', 'finance_manager', 'employee'])
                 ->orderByRaw("CASE WHEN status = 'active' THEN 0 ELSE 1 END")
                 ->orderBy('name')
                 ->get(),
