@@ -66,11 +66,11 @@
             </form>
         </section>
 
-        {{-- ── Daftar Admin ── --}}
+        {{-- ── Daftar Tim ── --}}
         <section class="card" style="padding:0; overflow:hidden;">
             <div class="section-title" style="padding:18px 20px;">
-                <h2>Anggota Admin</h2>
-                <span class="badge">{{ $members->count() }} admin</span>
+                <h2>Anggota Tim</h2>
+                <span class="badge">{{ $members->count() }} anggota</span>
             </div>
             <div class="table-wrap">
                 <table>
@@ -93,12 +93,14 @@
                                         'super_admin' => 'badge-blue',
                                         'hr_manager' => 'badge-green',
                                         'finance_manager' => 'badge-amber',
+                                        'employee' => 'badge-purple',
                                         default => ''
                                     } }}">
                                         {{ match($member->role) {
                                             'super_admin' => 'Super Admin',
                                             'hr_manager' => 'HR Manager',
                                             'finance_manager' => 'Finance Manager',
+                                            'employee' => 'Employee',
                                             default => ucfirst(str_replace('_', ' ', $member->role))
                                         } }}
                                     </span>

@@ -116,20 +116,20 @@
             </div>
         </aside>
 
-        <main x-data>
-            <header class="topbar">
-                <div class="topbar-left">
-                    <button class="topbar-menu-btn" @click="$store.sidebar.toggle()" title="Toggle sidebar" aria-label="Toggle sidebar">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
-                        </svg>
-                    </button>
-                    <div class="topbar-breadcrumb">
-                        <span class="topbar-brand">PaySync</span>
-                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color:#cbd5e1;flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg>
-                        <span class="topbar-page">{{ $title }}</span>
-                    </div>
-                </div>
+                <main x-data>
+                            <header class="topbar">
+                                <div class="topbar-left">
+                                    <button class="topbar-menu-btn" @click="$store.sidebar.toggle()" title="Toggle menu" aria-label="Toggle menu">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+                                        </svg>
+                                    </button>
+                                    <div class="topbar-breadcrumb">
+                                        <span class="topbar-brand">PaySync</span>
+                                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color:#cbd5e1;flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg>
+                                        <span class="topbar-page">{{ $title }}</span>
+                                    </div>
+                                </div>
                 <div class="topbar-right" x-data>
                     {{-- Global Search --}}
                     <div
@@ -436,12 +436,30 @@
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.store('sidebar', {
-                collapsed: localStorage.getItem('sidebar-collapsed') === 'true',
-                toggle() {
-                    this.collapsed = !this.collapsed;
-                    localStorage.setItem('sidebar-collapsed', this.collapsed);
-                }
-            });
+                            collapsed: localStorage.getItem('sidebar-collapsed') === 'true',
+                            open: false,
+                            toggle() {
+                                // Smart toggle: desktop = collapse, mobile = open overlay
+                                if (window.matchMedia('(max-width: 768px)').matches) {
+                                    this.toggleMobile();
+                                } else {
+                                    this.collapsed = !this.collapsed;
+                                    localStorage.setItem('sidebar-collapsed', this.collapsed);
+                                }
+                            },
+                            toggleMobile() {
+                                if (this.open) this.closeMobile();
+                                else this.openMobile();
+                            },
+                            openMobile() {
+                                this.open = true;
+                                document.body.classList.add('sidebar-open');
+                            },
+                            closeMobile() {
+                                this.open = false;
+                                document.body.classList.remove('sidebar-open');
+                            }
+                        });
 
             // 11.1 - Confirm dialog store
             Alpine.store('confirm', {

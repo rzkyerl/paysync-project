@@ -33,7 +33,6 @@
                     <p>PaySync membantu perusahaan mengelola data karyawan, kehadiran, payroll, approval, slip digital, dan transfer gaji massal dalam workflow yang mudah diaudit.</p>
                     <div style="display:flex; flex-wrap:wrap; gap:12px; margin:26px 0 14px;">
                         <a class="btn btn-primary" href="/app/dashboard-hr">Mulai Sekarang</a>
-                        <a class="btn btn-secondary" href="/login?demo=1">Coba Demo</a>
                         <a class="btn btn-secondary" href="#cara-kerja">Lihat Cara Kerja</a>
                     </div>
                     <span class="muted" style="font-size:13px;">Dirancang untuk membantu HR dan Finance bekerja dari satu sumber data yang konsisten.</span>
